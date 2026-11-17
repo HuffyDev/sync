@@ -98,7 +98,6 @@ async function route() {
     if (gen !== routeGen) { try { done?.(); } catch {} return; }
     cleanup = done;
     const h1 = el.querySelector('.page-head h1');
-    if (h1 && CODES[name] && !h1.previousElementSibling?.classList.contains('kicker')) h1.insertAdjacentHTML('beforebegin', `<p class="kicker">${esc(CODES[name])}</p>`);
   } catch (err) {
     console.error(err);
     mount(el, html`<div class="notice bad"><strong>Something went wrong.</strong> ${err.message}</div>`);
@@ -160,22 +159,22 @@ async function dashboard(el) {
         <p class="kicker">Offline crypto relay</p>
         <h2>Send crypto with no internet.</h2>
         <p>Sign in your own wallet — offline is fine. LASTSYNC checks it, carries it across your group, and broadcasts it on the first signal.</p>
-        <div class="rb-tags"><span>BTC</span><span>SOL · durable nonce</span><span>keys never leave your wallet</span></div>
+        <div class="rb-tags"><span>Bitcoin</span><span>Solana with a durable nonce</span><span>Keys stay in your wallet</span></div>
       </div>
       <div class="rb-rail" aria-hidden="true">
-        <div class="rb-node"><b>WALLET</b><small>signed</small></div>
+        <div class="rb-node"><b>Wallet</b><small>signed</small></div>
         <div class="rb-line"><i></i><i></i><i></i></div>
-        <div class="rb-node"><b>LASTSYNC</b><small>verified</small></div>
+        <div class="rb-node"><b>LASTSYNC</b><small>checked</small></div>
         <div class="rb-line"><i></i><i></i><i></i></div>
-        <div class="rb-node rb-nosig"><b>MESH</b><small>no signal…</small></div>
+        <div class="rb-node rb-nosig"><b>Your group</b><small>no signal yet</small></div>
         <div class="rb-line"><i></i><i></i><i></i></div>
-        <div class="rb-node rb-ok"><b>CHAIN</b><small>confirmed</small></div>
+        <div class="rb-node rb-ok"><b>Network</b><small>confirmed</small></div>
       </div>
       <div class="rb-stats">
         <div><b class="${d.relay.queued ? 'warn' : ''}">${d.relay.queued}</b><span>waiting</span></div>
         <div><b>${d.relay.sent}</b><span>sent</span></div>
         <div><b class="ok">${d.relay.confirmed}</b><span>confirmed</span></div>
-        <span class="btn primary small">Open relay →</span>
+        <span class="btn primary small">Open the relay</span>
       </div>
     </a>
     <div class="stat-row">
@@ -589,7 +588,7 @@ api('/api/status').then((s) => {
   state.downloadUrl = s.downloadUrl;
   if (state.public) { const brand = document.querySelector('.brand'); if (brand) { brand.href = '/welcome'; brand.title = 'Front page'; } }
   renderNav(currentNav());
-  if (state.public) mount($('#side-foot'), html`<span class="offline-dot"></span>DEMO UPLINK<br>DATA KEPT 7 DAYS IN THIS BROWSER<br><a href="#/source" class="foot-link">OPEN SOURCE · MIT</a>`);
+  if (state.public) mount($('#side-foot'), html`<span class="offline-dot"></span>Online demo. Your data is kept for 7 days in this browser.<br><a href="#/source" class="foot-link">Open source (MIT)</a>`);
   renderHud();
 }).catch(() => {});
 startHud();
@@ -626,27 +625,26 @@ function renderHud() {
   const now = new Date();
   const lcl = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
   const utc = `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}Z`;
-  const date = now.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+  const date = now.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
   const b = state.battery;
-  let pwr = html`<span class="hud-item"><span class="led"></span><span class="k">PWR</span><b>—</b></span>`;
+  let pwr = html`<span class="hud-item"><span class="led"></span><span class="k">Battery</span><b>—</b></span>`;
   if (b) {
     const pct = Math.round(b.level * 100);
     const cls = b.charging ? 'ok' : pct <= 15 ? 'bad' : pct <= 35 ? 'warn' : 'ok';
-    pwr = html`<span class="hud-item ${cls}" title="Battery of this device"><span class="led"></span><span class="k">PWR</span><b>${b.charging ? 'AC ' : 'BATT '}${pct}%</b>${!b.charging && b.dischargingTime && Number.isFinite(b.dischargingTime) ? html`<span class="k">~${Math.round(b.dischargingTime / 60)} MIN</span>` : ''}</span>`;
+    pwr = html`<span class="hud-item ${cls}" title="Battery of this device"><span class="led"></span><span class="k">Battery</span><b>${pct}%${b.charging ? ' charging' : ''}</b>${!b.charging && b.dischargingTime && Number.isFinite(b.dischargingTime) ? html`<span class="k">about ${Math.round(b.dischargingTime / 60)} min left</span>` : ''}</span>`;
   }
   const r = state.readiness;
   const g = state.group;
   mount($('#hud'), html`
-    <span class="hud-item"><span class="k">LCL</span><b>${lcl}</b></span>
+    <span class="hud-item"><b>${lcl}</b><span class="k">${date}</span></span>
     <span class="hud-item"><span class="k">UTC</span><b>${utc}</b></span>
-    <span class="hud-item"><span class="k">${date}</span></span>
-    <span class="hud-item ${state.online ? 'ok' : 'bad'}" title="Internet connection"><span class="led"></span><span class="k">UPLINK</span><b>${state.online ? 'UP' : 'DOWN'}</b></span>
+    <span class="hud-item ${state.online ? 'ok' : 'bad'}" title="Internet connection"><span class="led"></span><span class="k">Internet</span><b>${state.online ? 'connected' : 'offline'}</b></span>
     ${pwr}
     <span class="hud-spacer"></span>
-    ${g?.help ? html`<a class="hud-item alert" href="#/group"><span class="k">SOS</span><b>${g.help.fromName}</b></a>` : g ? html`<a class="hud-item ok" href="#/group"><span class="led"></span><span class="k">GROUP</span><b>LIVE</b></a>` : ''}
-    ${r != null ? html`<a class="hud-item ${r >= 80 ? 'ok' : r >= 50 ? 'warn' : 'bad'}" href="#/ready"><span class="led"></span><span class="k">READY</span><b>${r}%</b></a>` : ''}
-    ${state.installPrompt ? html`<button class="hud-item ok" data-install style="background:none;border:0;border-right:1px solid var(--line);cursor:pointer;font:inherit;letter-spacing:inherit"><span class="led"></span><b>INSTALL APP</b></button>` : ''}
-    <span class="hud-item"><span class="k">MODE</span><b>${state.public ? 'DEMO' : 'LOCAL'}</b></span>`);
+    ${g?.help ? html`<a class="hud-item alert" href="#/group"><b>${g.help.fromName} needs help</b></a>` : g ? html`<a class="hud-item ok" href="#/group"><span class="led"></span><span class="k">Group</span><b>live</b></a>` : ''}
+    ${r != null ? html`<a class="hud-item ${r >= 80 ? 'ok' : r >= 50 ? 'warn' : 'bad'}" href="#/ready"><span class="led"></span><span class="k">Ready</span><b>${r}%</b></a>` : ''}
+    ${state.installPrompt ? html`<button class="hud-item ok" data-install style="background:none;border:0;border-right:1px solid var(--line);cursor:pointer;font:inherit;letter-spacing:inherit"><span class="led"></span><b>Install app</b></button>` : ''}
+    <span class="hud-item"><b>${state.public ? 'Online demo' : 'Running on this computer'}</b></span>`);
 }
 function startHud() {
   renderHud();

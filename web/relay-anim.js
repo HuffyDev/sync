@@ -26,14 +26,14 @@ function start() {
     cv.width = W * DPR; cv.height = H * DPR;
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     wide = W > 980;
-    const x0 = wide ? W * 0.47 : W * 0.06, x1 = wide ? W * 0.9 : W * 0.9;
+    const x0 = wide ? W * 0.55 : W * 0.07, x1 = wide ? W * 0.92 : W * 0.9;
     const yMid = wide ? H * 0.58 : H * 0.62;
     const span = x1 - x0;
     nodes = [
-      { x: x0, y: yMid + 40, label: 'WALLET', sub: 'signed offline', kind: 'wallet' },
-      { x: x0 + span * 0.22, y: yMid - 10, label: 'LASTSYNC', sub: 'verified', kind: 'core' },
-      { x: x0 + span * 0.42, y: yMid + 50, label: 'PHONE', sub: 'wi-fi mesh', kind: 'phone' },
-      { x: x0 + span * 0.6, y: yMid - 5, label: 'PHONE', sub: 'wi-fi mesh', kind: 'phone' },
+      { x: x0, y: yMid + 40, label: 'Wallet', sub: 'signed offline', kind: 'wallet' },
+      { x: x0 + span * 0.22, y: yMid - 10, label: 'LASTSYNC', sub: 'checks it', kind: 'core' },
+      { x: x0 + span * 0.42, y: yMid + 50, label: 'Phone', sub: 'local Wi-Fi', kind: 'phone' },
+      { x: x0 + span * 0.6, y: yMid - 5, label: 'Phone', sub: 'local Wi-Fi', kind: 'phone' },
     ];
     tower = { x: x0 + span * 0.8, y: yMid + 30 };
     chainPos = { x: x0 + span * 0.97, y: wide ? H * 0.2 : H * 0.18 };
@@ -63,29 +63,38 @@ function start() {
     return [chainPos.x, chainPos.y + 40];
   }
 
+  // Nodes are drawn as the logo's brushed-silver tiles.
   function drawNode(n, active, chainColor, sym) {
-    const r = n.kind === 'core' ? 22 : 17;
-    const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 3);
-    glow.addColorStop(0, rgba(active ? chainColor : STEEL, active ? 0.22 : 0.07)); glow.addColorStop(1, rgba(STEEL, 0));
-    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(n.x, n.y, r * 3, 0, Math.PI * 2); ctx.fill();
-    // hexagon
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + (i * Math.PI) / 3; const x = n.x + Math.cos(a) * r, y = n.y + Math.sin(a) * r; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(16,17,20,0.95)'; ctx.fill();
-    ctx.strokeStyle = rgba(active ? chainColor : STEEL, active ? 0.95 : 0.45); ctx.lineWidth = 1.4; ctx.stroke();
-    // icon glyph
-    ctx.fillStyle = rgba(WHITE, 0.85); ctx.font = `700 ${n.kind === 'core' ? 11 : 10}px ui-monospace, Consolas, monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const r = n.kind === 'core' ? 24 : 18;
+    if (active) {
+      const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 3);
+      glow.addColorStop(0, rgba(chainColor, 0.28)); glow.addColorStop(1, rgba(chainColor, 0));
+      ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(n.x, n.y, r * 3, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 14; ctx.shadowOffsetY = 4;
+    const g = ctx.createLinearGradient(n.x - r, n.y - r, n.x + r, n.y + r);
+    g.addColorStop(0, '#f4f5f7'); g.addColorStop(0.55, '#d3d6dc'); g.addColorStop(1, '#b3b7bf');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.roundRect(n.x - r, n.y - r, r * 2, r * 2, r * 0.42); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = active ? rgba(chainColor, 0.95) : 'rgba(150,155,165,0.9)'; ctx.lineWidth = active ? 2 : 1;
+    ctx.beginPath(); ctx.roundRect(n.x - r, n.y - r, r * 2, r * 2, r * 0.42); ctx.stroke();
+    ctx.fillStyle = '#2a2c31'; ctx.strokeStyle = '#2a2c31';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     if (n.kind === 'phone') {
-      ctx.strokeStyle = rgba(WHITE, 0.85); ctx.lineWidth = 1.3;
+      ctx.lineWidth = 1.4;
       ctx.beginPath(); ctx.roundRect(n.x - 4.5, n.y - 7, 9, 14, 2); ctx.stroke();
-      ctx.fillStyle = rgba(WHITE, 0.85); ctx.fillRect(n.x - 1, n.y + 4, 2, 1.2);
-    } else ctx.fillText(n.kind === 'wallet' ? sym : 'LS', n.x, n.y + 0.5);
+      ctx.fillRect(n.x - 1, n.y + 4, 2, 1.2);
+    } else {
+      ctx.font = `650 ${n.kind === 'core' ? 12 : 13}px "Instrument Sans", system-ui, sans-serif`;
+      ctx.fillText(n.kind === 'wallet' ? sym : 'LS', n.x, n.y + 0.5);
+    }
     ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = rgba([220, 228, 238], 0.85); ctx.font = '700 9.5px ui-monospace, Consolas, monospace';
-    ctx.fillText(n.label, n.x, n.y + r + 16);
-    ctx.fillStyle = rgba([150, 160, 172], 0.8); ctx.font = '9px ui-monospace, Consolas, monospace';
-    ctx.fillText(n.sub, n.x, n.y + r + 28);
+    ctx.fillStyle = 'rgba(232,234,238,0.92)'; ctx.font = '600 11.5px "Instrument Sans", system-ui, sans-serif';
+    ctx.fillText(n.label, n.x, n.y + r + 18);
+    ctx.fillStyle = 'rgba(150,156,166,0.9)'; ctx.font = '500 10.5px "Instrument Sans", system-ui, sans-serif';
+    ctx.fillText(n.sub, n.x, n.y + r + 32);
   }
 
   function frame(now) {
@@ -104,10 +113,10 @@ function start() {
     ctx.restore();
 
     // mesh links (animated dashes)
-    ctx.setLineDash([3, 7]); ctx.lineDashOffset = -now / 60; ctx.lineWidth = 1.2;
+    ctx.setLineDash([2, 6]); ctx.lineDashOffset = -now / 60; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
     for (let i = 0; i < nodes.length - 1; i++) {
       const a = nodes[i], b = nodes[i + 1];
-      ctx.strokeStyle = rgba(STEEL, 0.35);
+      ctx.strokeStyle = 'rgba(214,217,223,0.4)';
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo((a.x + b.x) / 2, Math.min(a.y, b.y) - 34, b.x, b.y); ctx.stroke();
     }
     ctx.setLineDash([]);
@@ -128,8 +137,8 @@ function start() {
       ctx.beginPath(); ctx.moveTo(tower.x - 9, tower.y - 34); ctx.lineTo(tower.x + 9, tower.y - 16); ctx.moveTo(tower.x + 9, tower.y - 34); ctx.lineTo(tower.x - 9, tower.y - 16); ctx.stroke();
     }
     ctx.textAlign = 'center';
-    ctx.fillStyle = rgba(tc, 0.95); ctx.font = '700 9.5px ui-monospace, Consolas, monospace';
-    ctx.fillText(signal ? 'SIGNAL FOUND' : 'NO SIGNAL', tower.x, tower.y + 48);
+    ctx.fillStyle = rgba(tc, 0.95); ctx.font = '600 11px "Instrument Sans", system-ui, sans-serif';
+    ctx.fillText(signal ? 'Signal found' : 'No signal', tower.x, tower.y + 48);
 
     // beam from tower to chain while uploading
     if (t > T.up[0] && t < T.land[1] + 300) {
@@ -148,7 +157,7 @@ function start() {
       const y = chainPos.y + 40 - (stack.length - i) * (bh + 6) - (landed ? 0 : 0);
       ctx.fillStyle = 'rgba(20,21,24,0.95)'; ctx.strokeStyle = rgba(b.color, 0.45); ctx.lineWidth = 1;
       ctx.beginPath(); ctx.roundRect(chainPos.x - bw / 2, y, bw, bh, 4); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = rgba([160, 170, 182], 0.85); ctx.font = '9px ui-monospace, Consolas, monospace'; ctx.textAlign = 'center';
+      ctx.fillStyle = rgba([160, 170, 182], 0.85); ctx.font = '500 10px "Instrument Sans", system-ui, sans-serif'; ctx.textAlign = 'center';
       ctx.fillText(`#${b.n.toLocaleString()}`, chainPos.x, y + 14.5);
     });
     if (landed) {
@@ -156,12 +165,12 @@ function start() {
       const y = chainPos.y + 40;
       ctx.fillStyle = rgba(C.color, 0.14 + 0.2 * (1 - k)); ctx.strokeStyle = rgba(C.color, 0.95); ctx.lineWidth = 1.4;
       ctx.beginPath(); ctx.roundRect(chainPos.x - bw / 2, y, bw, bh, 4); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.font = '700 9.5px ui-monospace, Consolas, monospace';
-      ctx.fillText('✓ CONFIRMED', chainPos.x, y + 14.5);
+      ctx.fillStyle = '#fff'; ctx.font = '600 11px "Instrument Sans", system-ui, sans-serif';
+      ctx.fillText('Confirmed', chainPos.x, y + 14.5);
       if (k < 1) { ctx.strokeStyle = rgba(C.color, (1 - k) * 0.6); ctx.beginPath(); ctx.roundRect(chainPos.x - bw / 2 - k * 16, y - k * 10, bw + k * 32, bh + k * 20, 6); ctx.stroke(); }
     }
-    ctx.fillStyle = rgba([150, 160, 172], 0.8); ctx.font = '700 9.5px ui-monospace, Consolas, monospace'; ctx.textAlign = 'center';
-    ctx.fillText(`${C.name} NETWORK`, chainPos.x, chainPos.y + 40 + bh + 18);
+    ctx.fillStyle = rgba([150, 160, 172], 0.8); ctx.font = '600 11px "Instrument Sans", system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(`${C.name === 'BTC' ? 'Bitcoin' : 'Solana'} network`, chainPos.x, chainPos.y + 40 + bh + 18);
 
     // nodes
     const pp = packetPos(t);
@@ -175,8 +184,8 @@ function start() {
       const n = nodes[1];
       ctx.strokeStyle = rgba(GREEN, 0.9 * (1 - seg(t, T.verify[1], T.verify[1] + 400))); ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(n.x, n.y, 30, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = rgba(GREEN, 0.95 * (1 - seg(t, T.verify[1], T.verify[1] + 400))); ctx.font = '700 9.5px ui-monospace, Consolas, monospace'; ctx.textAlign = 'center';
-      ctx.fillText('SIGNATURE ✓', n.x, n.y - 40);
+      ctx.fillStyle = rgba(GREEN, 0.95 * (1 - seg(t, T.verify[1], T.verify[1] + 400))); ctx.font = '600 11px "Instrument Sans", system-ui, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('Signature checked', n.x, n.y - 42);
     }
     // holding pulse at the last phone
     if (t > T.hold[0] && t < T.up[0]) {
@@ -184,8 +193,8 @@ function start() {
       const ph = ((now / 900) % 1);
       ctx.strokeStyle = rgba(C.color, (1 - ph) * 0.6); ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.arc(n.x, n.y, 18 + ph * 26, 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = rgba([227, 201, 107], 0.95); ctx.font = '700 9.5px ui-monospace, Consolas, monospace';
-      ctx.fillText('HOLDING · WAITING FOR SIGNAL', n.x, n.y - 38);
+      ctx.fillStyle = rgba([227, 201, 107], 0.95); ctx.font = '600 11px "Instrument Sans", system-ui, sans-serif';
+      ctx.fillText('Holding until there is a signal', n.x, n.y - 40);
     }
     // sign flash at wallet
     if (t < T.sign[1] + 200) {
@@ -193,8 +202,8 @@ function start() {
       const n = nodes[0];
       ctx.strokeStyle = rgba(C.color, 1 - k); ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(n.x, n.y, 18 + k * 30, 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = rgba(C.color, 0.95); ctx.font = '700 9.5px ui-monospace, Consolas, monospace';
-      ctx.fillText(`SIGNED · ${C.amount}`, n.x, n.y - 36);
+      ctx.fillStyle = rgba(C.color, 0.95); ctx.font = '600 11px "Instrument Sans", system-ui, sans-serif';
+      ctx.fillText(`Signed: ${C.amount}`, n.x, n.y - 38);
     }
 
     // packet + trail particles

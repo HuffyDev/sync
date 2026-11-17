@@ -112,12 +112,12 @@ function outage(now) {
   });
   ripples.push({ i: center, start: now, color: RED, big: true });
   log(`uplink lost near ${CITIES[center][0]} — switching to local core`, 'bad');
-  setState('UPLINK LOST · RUNNING LOCAL', true);
+  setState('Internet lost. Running locally.', true);
   setTimeout(() => { log(`${CITIES[center][0]}: guides, maps and AI still running offline`); }, 1300);
   setTimeout(() => {
     ripples.push({ i: center, start: performance.now(), color: GREEN, big: true });
     log(`${CITIES[center][0]} back online — resynced`, 'ok');
-    setState('ALL SYSTEMS LOCAL', false);
+    setState('Everything running locally', false);
   }, 4300);
 }
 
@@ -190,7 +190,7 @@ function frame(now) {
     const isDark = dark.has(i);
     ctx.fillStyle = isDark ? rgba(RED, 0.9) : rgba([225, 235, 245], 0.6 + z * 0.4);
     ctx.beginPath(); ctx.arc(x, y, isDark ? 2.4 : 2, 0, Math.PI * 2); ctx.fill();
-    if (z > 0.55 && W > 980) { ctx.fillStyle = rgba([200, 210, 222], 0.35 * z); ctx.font = '9px ui-monospace, Consolas, monospace'; ctx.fillText(c[0].toUpperCase(), x + 6, y + 3); }
+    if (z > 0.55 && W > 980) { ctx.fillStyle = rgba([200, 210, 222], 0.35 * z); ctx.font = '500 10px "Instrument Sans", system-ui, sans-serif'; ctx.fillText(c[0], x + 6, y + 3); }
   });
   // Ripples
   for (let i = ripples.length - 1; i >= 0; i--) {
@@ -219,7 +219,7 @@ function hud() {
   $('lp-nodes').textContent = `${CITIES.length - dark.size}/${CITIES.length}`;
   $('lp-links').textContent = linkCount.toLocaleString();
   const up = $('lp-uplink');
-  up.textContent = dark.size ? 'DEGRADED' : 'ONLINE';
+  up.textContent = dark.size ? 'degraded' : 'online';
   up.className = dark.size ? 'bad' : 'ok';
 }
 function setState(text, bad) {

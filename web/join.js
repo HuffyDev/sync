@@ -23,7 +23,7 @@ async function joinForm(noSession) {
   try { name = localStorage.getItem('ls-name') || ''; } catch {}
   $('#tabs').hidden = true;
   mount(app, html`
-    <div class="phone-head"><img src="/icon.svg" width="34" height="34" alt=""><div><strong style="letter-spacing:.12em">LASTSYNC</strong><br><small class="muted">Local group — works without internet</small></div></div>
+    <div class="phone-head"><img src="/logo.png" width="34" height="34" alt=""><div><strong style="letter-spacing:.12em">LASTSYNC</strong><br><small class="muted">Local group — works without internet</small></div></div>
     ${!info.active ? html`<div class="notice warn">There's no group running on this laptop right now. Ask the person with the laptop to start one, then scan the QR code again.</div>` : html`
     <form class="card stack" id="jf">
       <h1 style="font-size:1.4rem">Join “${info.name}”</h1>
@@ -107,7 +107,7 @@ function checkin() {
   const mp = S.snap.session.meetingPoint;
   const last = m?.lastCheckIn;
   mount(app, html`
-    <div class="phone-head"><img src="/icon.svg" width="30" height="30" alt=""><div style="flex:1"><strong>${S.snap.session.name}</strong><br><small class="muted">You're ${m?.name || '…'} · ${S.snap.members.length} in group</small></div></div>
+    <div class="phone-head"><img src="/logo.png" width="30" height="30" alt=""><div style="flex:1"><strong>${S.snap.session.name}</strong><br><small class="muted">You're ${m?.name || '…'} · ${S.snap.members.length} in group</small></div></div>
     ${mp ? html`<div class="card" style="border-color:var(--meet)"><small class="muted">MEETING POINT</small><br><strong style="font-size:1.15rem">${mp.name}</strong>${mp.note && mp.note !== mp.name ? html`<br><span>${mp.note}</span>` : ''}<br><small class="muted">Set by ${mp.setBy} ${ago(mp.ts)}</small>${mp.lat != null ? html`<div><button class="btn small" id="mp-map" style="margin-top:8px">${icon('map')}Show on map</button></div>` : ''}</div>` : ''}
     <div class="card stack" style="margin-top:14px">
       <h2 style="margin:0">Tell your group</h2>

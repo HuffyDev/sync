@@ -6,7 +6,7 @@
   <title>LASTSYNC — stay in sync when the grid goes dark</title>
   <meta name="description" content="Open-source offline survival system: field guides, offline street maps, on-device AI and household check-ins that keep working with no internet.">
   <meta name="theme-color" content="#0b0c0e">
-  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/logo-64.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="stylesheet" href="/styles.css">
   <script src="/vendor/topojson-client.min.js"></script>
@@ -15,7 +15,7 @@
 </head>
 <body class="lp">
   <header class="lp-nav">
-    <a class="lp-brand" href="/welcome"><img src="/icon.svg" alt="" width="26" height="26"><span>LASTSYNC</span></a>
+    <a class="lp-brand" href="/welcome"><img src="/logo.png" alt="" width="26" height="26"><span>LASTSYNC</span></a>
     <nav class="lp-links" aria-label="Sections">
       <a href="#relay">Crypto relay</a><a href="#features">Features</a><a href="#how">How it works</a><a href="#open">Open source</a>
     </nav>
@@ -29,7 +29,7 @@
     <canvas id="lp-relay" aria-hidden="true"></canvas>
     <div class="lp-x-inner">
       <div class="lp-x-copy">
-        <div class="lp-pill"><span class="lp-led"></span>OFFLINE CRYPTO RELAY<span class="lp-sep">·</span>BTC<span class="lp-sep">·</span>SOL</div>
+        <div class="lp-pill"><span class="lp-led"></span>Offline crypto relay for Bitcoin and Solana</div>
         <h1>Send crypto.<br><span>No internet required.</span></h1>
         <p class="lp-sub">Sign in your own wallet — even with no connection. LASTSYNC verifies it, carries it phone-to-phone over local Wi-Fi, and broadcasts it the instant any device finds a signal.</p>
         <div class="lp-ctas">
@@ -37,7 +37,7 @@
           <a class="btn" href="#how-relay">How it works</a>
           <a class="btn ghost" href="https://github.com/HuffyDev/sync/blob/main/server/relay.js" target="_blank" rel="noopener">Read the code</a>
         </div>
-        <div class="lp-x-facts"><span>{</span>keys never leave your wallet<span>·</span>every signature checked<span>·</span>broadcast on first signal<span>}</span></div>
+        <p class="lp-x-facts">Your keys never leave your wallet. Every signature is checked before anything is sent.</p>
         <div class="lp-txlog" aria-hidden="true"><div id="lp-txlines"></div></div>
       </div>
     </div>
@@ -47,7 +47,7 @@
     <section class="lp-hero">
       <canvas id="lp-bg" aria-hidden="true"></canvas>
       <div class="lp-copy">
-        <div class="lp-pill"><span class="lp-led"></span><span id="lp-state">ALL SYSTEMS LOCAL</span><span class="lp-sep">·</span>v1.0<span class="lp-sep">·</span>MIT</div>
+        <div class="lp-pill"><span class="lp-led"></span><span id="lp-state">Everything running locally</span></div>
         <h1>Stay in sync<br><span>when the grid goes dark.</span></h1>
         <p class="lp-sub">Field guides, offline street maps, an on-device AI and household check-ins — running on your own machine, with no signal and no servers.</p>
         <div class="lp-ctas">
@@ -55,13 +55,13 @@
           <a class="btn" href="https://github.com/HuffyDev/sync/releases/latest" target="_blank" rel="noopener">Download for Windows</a>
           <a class="btn ghost" href="https://github.com/HuffyDev/sync" target="_blank" rel="noopener">View source</a>
         </div>
-        <div class="lp-log" aria-hidden="true"><div class="lp-log-head"><span>SYSTEM LOG</span><span id="lp-clock">--:--:--</span></div><div id="lp-lines"></div></div>
+        <div class="lp-log" aria-hidden="true"><div class="lp-log-head"><span>System log</span><span id="lp-clock">--:--:--</span></div><div id="lp-lines"></div></div>
       </div>
       <div class="lp-stage" aria-hidden="true">
-        <div class="lp-hud lp-hud-tl"><span class="label">NODES</span><b id="lp-nodes">—</b></div>
-        <div class="lp-hud lp-hud-tr"><span class="label">LINKS</span><b id="lp-links">—</b></div>
-        <div class="lp-hud lp-hud-bl"><span class="label">UPLINK</span><b id="lp-uplink">ONLINE</b></div>
-        <div class="lp-hud lp-hud-br"><span class="label">LOCAL CORE</span><b class="ok">RUNNING</b></div>
+        <div class="lp-hud lp-hud-tl"><span class="label">Nodes</span><b id="lp-nodes">—</b></div>
+        <div class="lp-hud lp-hud-tr"><span class="label">Syncs</span><b id="lp-links">—</b></div>
+        <div class="lp-hud lp-hud-bl"><span class="label">Internet</span><b id="lp-uplink">online</b></div>
+        <div class="lp-hud lp-hud-br"><span class="label">Local core</span><b class="ok">running</b></div>
       </div>
     </section>
 

@@ -267,9 +267,9 @@ export async function mapView(el, _args, query) {
     const total = km(measurePts);
     const last = measurePts.length > 1 ? bearing(measurePts.at(-2), measurePts.at(-1)) : null;
     box.hidden = false;
-    mount(box, html`<span><span class="faint">DIST</span> <b>${fmtKm(total)}</b> / ${(total * 0.621371).toFixed(2)} MI</span>
-      ${last != null ? html`<span><span class="faint">BRG</span> <b>${Math.round(last).toString().padStart(3, '0')}°</b> ${compass(last)}</span>` : ''}
-      <span><span class="faint">ON FOOT</span> <b>${walkMin(total)} MIN</b></span>
+    mount(box, html`<span><span class="faint">Distance</span> <b>${fmtKm(total)}</b> / ${(total * 0.621371).toFixed(2)} MI</span>
+      ${last != null ? html`<span><span class="faint">Bearing</span> <b>${Math.round(last).toString().padStart(3, '0')}°</b> ${compass(last)}</span>` : ''}
+      <span><span class="faint">On foot</span> <b>${walkMin(total)} min</b></span>
       <button class="btn small" id="m-undo" ${measurePts.length ? '' : 'disabled'}>Undo</button>
       ${measurePts.length > 1 ? html`<button class="btn small" id="m-save">Save as route</button>` : ''}
       <button class="btn small ghost" id="m-clear">Clear</button>`);
@@ -318,10 +318,10 @@ export async function mapView(el, _args, query) {
     const c = cursor || map.getCenter();
     const age = gps.fixAt ? (Date.now() - new Date(gps.fixAt)) / 1000 : null;
     mount($('#coords'), html`
-      <div><span class="k">${cursor ? 'CURSOR' : 'CENTER'}</span>${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</div>
+      <div><span class="k">${cursor ? 'Cursor' : 'Center'}</span>${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</div>
       <div><span class="k">DMS</span>${dms(c.lat, 'NS')} ${dms(c.lng, 'EW')}</div>
-      <div><span class="k">VIEW</span>Z ${map.getZoom().toFixed(1)} · HDG ${String(Math.round((map.getBearing() + 360) % 360)).padStart(3, '0')}° · TILT ${Math.round(map.getPitch())}°</div>
-      <div><span class="k">GPS</span>${gps.lat != null ? html`<span style="color:${age > 120 ? 'var(--warn)' : 'var(--safe)'}">${gps.lat.toFixed(5)}, ${gps.lon.toFixed(5)} · ${ago(gps.fixAt)}</span>` : html`<span class="faint">NO FIX</span>`}</div>`);
+      <div><span class="k">View</span>zoom ${map.getZoom().toFixed(1)}, heading ${String(Math.round((map.getBearing() + 360) % 360)).padStart(3, '0')}°, tilt ${Math.round(map.getPitch())}°</div>
+      <div><span class="k">GPS</span>${gps.lat != null ? html`<span style="color:${age > 120 ? 'var(--warn)' : 'var(--safe)'}">${gps.lat.toFixed(5)}, ${gps.lon.toFixed(5)} · ${ago(gps.fixAt)}</span>` : html`<span class="faint">no fix</span>`}</div>`);
   }
 
   // Street map status chip: live / cached / offline.
@@ -562,10 +562,10 @@ export async function mapView(el, _args, query) {
       <section class="card stack">
         <div class="card-title"><h2>Offline street map</h2><span class="badge ${vtStatus.online ? 'ok' : vtStatus.cached?.tiles ? 'warn' : 'bad'}">${vtStatus.online ? 'live' : vtStatus.cached?.tiles ? 'cached' : 'offline'}</span></div>
         <p class="muted" style="margin:0;font-size:.88rem">Every area you look at while online is kept on ${isPublic ? 'the demo server' : 'this PC'}. Save your whole town ahead of time so it works with no signal.</p>
-        <div class="mono faint" style="font-size:.7rem;letter-spacing:.06em">${(vtStatus.cached?.tiles || 0).toLocaleString()} TILES CACHED · ${fmtBytes(vtStatus.cached?.bytes || 0)}</div>
+        <div class="mono faint" style="font-size:.7rem;letter-spacing:.06em">${(vtStatus.cached?.tiles || 0).toLocaleString()} map tiles saved (${fmtBytes(vtStatus.cached?.bytes || 0)})</div>
         ${job.running ? html`<div><div class="row between"><strong style="font-size:.9rem">Saving ${job.name}</strong><span class="mono">${job.done}/${job.total}</span></div><div class="progress" style="margin-top:6px"><i style="width:${Math.round((100 * job.done) / job.total)}%"></i></div></div>`
           : html`<div class="row" style="flex-wrap:nowrap"><input id="area-name" placeholder="Name this area, e.g. Home town" maxlength="80"><button class="btn small primary" id="save-area">${icon('download')}Save</button></div><small class="muted mono" id="save-est" style="font-size:.7rem"></small>`}
-        ${vtStatus.areas?.length ? html`<ul class="list">${vtStatus.areas.map((a) => html`<li class="row between"><span><strong>${a.name}</strong><br><small class="mono">${a.tiles.toLocaleString()} TILES · ${fmtBytes(a.bytes)}${a.failed ? ` · ${a.failed} MISSED` : ''}</small></span><span class="row"><button class="btn small" data-area="${a.id}">Go</button>${isPublic ? '' : html`<button class="icon-btn" data-delarea="${a.id}" aria-label="Remove">${icon('trash')}</button>`}</span></li>`)}</ul>` : ''}
+        ${vtStatus.areas?.length ? html`<ul class="list">${vtStatus.areas.map((a) => html`<li class="row between"><span><strong>${a.name}</strong><br><small class="mono">${a.tiles.toLocaleString()} tiles, ${fmtBytes(a.bytes)}${a.failed ? `, ${a.failed} missed` : ''}</small></span><span class="row"><button class="btn small" data-area="${a.id}">Go</button>${isPublic ? '' : html`<button class="icon-btn" data-delarea="${a.id}" aria-label="Remove">${icon('trash')}</button>`}</span></li>`)}</ul>` : ''}
       </section>
       <section class="card stack">
         <div class="card-title"><h2>Position</h2>${gps.source ? html`<button class="btn small ghost" id="gps-stop">Stop</button>` : ''}</div>
@@ -582,7 +582,7 @@ export async function mapView(el, _args, query) {
       </section>
       <section class="card">
         <h2>Routes · ${routes.length}</h2>
-        ${routes.length ? html`<ul class="list">${routes.map((r) => html`<li><a href="#" class="item-link" data-route="${r.id}"><strong>${r.name}</strong><br><small class="mono">${fmtKm(km(r.points))} · ~${walkMin(km(r.points))} MIN ON FOOT${r.pack ? ' · ' + r.pack : ''}</small></a></li>`)}</ul>` : html`<p class="muted" style="margin:0">No routes saved yet.</p>`}
+        ${routes.length ? html`<ul class="list">${routes.map((r) => html`<li><a href="#" class="item-link" data-route="${r.id}"><strong>${r.name}</strong><br><small class="mono">${fmtKm(km(r.points))} · about ${walkMin(km(r.points))} min on foot${r.pack ? ' · ' + r.pack : ''}</small></a></li>`)}</ul>` : html`<p class="muted" style="margin:0">No routes saved yet.</p>`}
       </section>
       <section class="card stack">
         <div class="card-title"><h2>Imported maps</h2><label class="btn small">${icon('upload')}.mbtiles<input type="file" id="mbt" accept=".mbtiles" hidden></label></div>
