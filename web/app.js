@@ -88,6 +88,7 @@ async function route() {
   renderNav(name ? '#/' + name : '#/');
   const el = $('#view');
   el.innerHTML = '';
+  el.className = ''; // a page may widen the layout (e.g. the map); always start clean
   try {
     const done = (await view(el, args, query)) || null;
     // A newer navigation started while this page was loading: discard this one.

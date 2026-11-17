@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LASTSYNC — stay in sync when the grid goes dark</title>
+  <meta name="description" content="Open-source offline survival system: field guides, offline street maps, on-device AI and household check-ins that keep working with no internet.">
+  <meta name="theme-color" content="#0b0c0e">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/vendor/topojson-client.min.js"></script>
+  <script type="module" src="/landing.js"></script>
+</head>
+<body class="lp">
+  <canvas id="lp-bg" aria-hidden="true"></canvas>
+  <header class="lp-nav">
+    <a class="lp-brand" href="/welcome"><img src="/icon.svg" alt="" width="26" height="26"><span>LASTSYNC</span></a>
+    <nav class="lp-links" aria-label="Sections">
+      <a href="#features">Features</a><a href="#how">How it works</a><a href="#open">Open source</a>
+    </nav>
+    <div class="lp-nav-cta">
+      <a class="btn small ghost" href="https://github.com/HuffyDev/sync" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn small primary" href="/?enter=1">Launch app</a>
+    </div>
+  </header>
+
+  <main class="lp-main">
+    <section class="lp-hero">
+      <div class="lp-copy">
+        <div class="lp-pill"><span class="lp-led"></span><span id="lp-state">ALL SYSTEMS LOCAL</span><span class="lp-sep">·</span>v1.0<span class="lp-sep">·</span>MIT</div>
+        <h1>Stay in sync<br><span>when the grid goes dark.</span></h1>
+        <p class="lp-sub">Field guides, offline street maps, an on-device AI and household check-ins — running on your own machine, with no signal and no servers.</p>
+        <div class="lp-ctas">
+          <a class="btn primary" href="/?enter=1">Launch the app</a>
+          <a class="btn" href="https://github.com/HuffyDev/sync/releases/latest" target="_blank" rel="noopener">Download for Windows</a>
+          <a class="btn ghost" href="https://github.com/HuffyDev/sync" target="_blank" rel="noopener">View source</a>
+        </div>
+        <div class="lp-log" aria-hidden="true"><div class="lp-log-head"><span>SYSTEM LOG</span><span id="lp-clock">--:--:--</span></div><div id="lp-lines"></div></div>
+      </div>
+      <div class="lp-stage" aria-hidden="true">
+        <div class="lp-hud lp-hud-tl"><span class="label">NODES</span><b id="lp-nodes">—</b></div>
+        <div class="lp-hud lp-hud-tr"><span class="label">LINKS</span><b id="lp-links">—</b></div>
+        <div class="lp-hud lp-hud-bl"><span class="label">UPLINK</span><b id="lp-uplink">ONLINE</b></div>
+        <div class="lp-hud lp-hud-br"><span class="label">LOCAL CORE</span><b class="ok">RUNNING</b></div>
+      </div>
+    </section>
+
+    <section class="lp-stats">
+      <div><b>22</b><span>field guides</span></div>
+      <div><b>64</b><span>encyclopedia articles</span></div>
+      <div><b>3</b><span>on-device AI models</span></div>
+      <div><b>0</b><span>servers required</span></div>
+      <div><b>100%</b><span>open source</span></div>
+    </section>
+
+    <section class="lp-features" id="features">
+      <article><span class="lp-num">01</span><h3>Search &amp; Ask</h3><p>Every guide, PDF and note on your machine. Answers quote the source, and say so when they don't know.</p></article>
+      <article><span class="lp-num">02</span><h3>Offline street maps</h3><p>Real streets, buildings and emergency places. Save your town once; use it with zero signal. Range rings, routes, GPS.</p></article>
+      <article><span class="lp-num">03</span><h3>On-device AI</h3><p>Three model sizes that run in your browser on your own graphics chip. No servers, no account.</p></article>
+      <article><span class="lp-num">04</span><h3>Encyclopedia</h3><p>64 survival-relevant Wikipedia articles — medicine, water, power, navigation, disasters — saved for offline.</p></article>
+      <article><span class="lp-num">05</span><h3>Household check-ins</h3><p>Your laptop hosts the group over local Wi-Fi. Phones scan a QR code and send I'm safe, Meet here or I need help.</p></article>
+      <article><span class="lp-num">06</span><h3>Plan &amp; gear</h3><p>Contacts, rally points and a grab list, a printable one-page backup, and a gear checklist with an essentials score.</p></article>
+    </section>
+
+    <section class="lp-how" id="how">
+      <div><span class="lp-step">1</span><div><h3>Set up while you're online</h3><p>Fill in your plan, save your area's map, download the encyclopedia and an AI model.</p></div></div>
+      <div><span class="lp-step">2</span><div><h3>The network goes down</h3><p>Power cut, storm, outage. Phones lose signal. The internet is gone.</p></div></div>
+      <div><span class="lp-step">3</span><div><h3>Everything still runs</h3><p>LASTSYNC runs on your PC or USB stick. Your household stays in sync over local Wi-Fi.</p></div></div>
+    </section>
+
+    <section class="lp-open" id="open">
+      <div>
+        <p class="kicker">Open source</p>
+        <h2>Every line is public.</h2>
+        <p>LASTSYNC is free and open source under the MIT license. Read it, run it yourself, change it, share it. Every running copy shows the exact commit and file fingerprints it uses.</p>
+      </div>
+      <div class="lp-open-card">
+        <div class="row between"><span class="label">License</span><b>MIT</b></div>
+        <div class="row between"><span class="label">Running commit</span><b class="mono" id="lp-commit">—</b></div>
+        <div class="row between"><span class="label">Files</span><b id="lp-files">—</b></div>
+        <div class="lp-fp mono" id="lp-fp"></div>
+        <div class="row" style="margin-top:10px"><a class="btn small primary" href="https://github.com/HuffyDev/sync" target="_blank" rel="noopener">GitHub</a><a class="btn small" href="/?enter=1#/source">Verify in the app</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lp-foot">
+    <span>LASTSYNC · open source (MIT)</span>
+    <span class="mono" id="lp-foot-commit"></span>
+    <a href="https://github.com/HuffyDev/sync" target="_blank" rel="noopener">github.com/HuffyDev/sync</a>
+  </footer>
+</body>
+</html>

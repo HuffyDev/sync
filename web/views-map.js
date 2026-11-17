@@ -719,7 +719,6 @@ export async function mapView(el, _args, query) {
     clearInterval(tick);
     document.removeEventListener('keydown', onKey);
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-    el.classList.remove('full');
     try { map.remove(); } catch {}
   };
 }

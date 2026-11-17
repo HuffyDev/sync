@@ -559,11 +559,12 @@ export function createApp(opts = {}) {
     '.ico': 'image/x-icon', '.pdf': 'application/pdf', '.txt': 'text/plain; charset=utf-8', '.md': 'text/plain; charset=utf-8',
     '.webmanifest': 'application/manifest+json', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
   };
-  const GUEST_STATIC = /^\/(join\.html|join\.js|shared\.js|nmea\.js|manifest\.webmanifest|icon-(?:192|512)\.png|styles\.css|icon\.svg|vendor\/leaflet\/[\w.-]+(?:\/[\w.-]+)?|vendor\/countries-(?:110m|50m|10m)\.json|vendor\/topojson-client\.min\.js|basemap\.js)$/;
+  const GUEST_STATIC = /^\/(welcome\.html|landing\.js|join\.html|join\.js|shared\.js|nmea\.js|manifest\.webmanifest|icon-(?:192|512)\.png|styles\.css|icon\.svg|vendor\/leaflet\/[\w.-]+(?:\/[\w.-]+)?|vendor\/countries-(?:110m|50m|10m)\.json|vendor\/topojson-client\.min\.js|basemap\.js)$/;
 
   async function serveStatic(req, res, pathname, owner) {
     let rel = pathname === '/' ? '/index.html' : pathname;
     if (rel === '/join') rel = '/join.html';
+    if (rel === '/welcome') rel = '/welcome.html';
     if (!owner && rel === '/index.html') {
       // Phones that open the bare address go to the join page.
       res.writeHead(302, { location: '/join' });
