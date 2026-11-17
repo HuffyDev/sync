@@ -31,7 +31,8 @@ async function joinForm(noSession) {
       <label class="field"><span>Invite code</span><input name="code" value="${code}" maxlength="8" required autocapitalize="characters" autocomplete="off" style="font-family:var(--mono);letter-spacing:.2em;text-transform:uppercase"></label>
       <button class="btn primary" style="min-height:52px">Join group</button>
       <small class="muted">Your phone may say this Wi-Fi has no internet — stay connected anyway.</small>
-    </form>`}`);
+    </form>`}
+    <p class="faint mono" style="font-size:.66rem;letter-spacing:.1em;text-align:center;margin-top:18px">LASTSYNC IS OPEN SOURCE · MIT LICENSE<br>GITHUB.COM/HUFFYDEV/SYNC</p>`);
   $('#jf')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const f = e.target;

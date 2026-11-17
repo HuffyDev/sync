@@ -2,10 +2,10 @@
 // connection. Everything is fetched from the network first (so you always get
 // the latest when online) and falls back to the last saved copy when offline.
 // Big static files (map data, libraries, tiles, images) are served from cache.
-const CACHE = 'lastsync-v2';
+const CACHE = 'lastsync-v3';
 const SHELL = [
   '/', '/styles.css', '/app.js', '/shared.js', '/basemap.js', '/mapstyle.js', '/nmea.js', '/ai.js', '/offline.js',
-  '/views-library.js', '/views-map.js', '/views-plan.js', '/views-group.js', '/views-packs.js', '/views-extra.js',
+  '/views-library.js', '/views-map.js', '/views-plan.js', '/views-group.js', '/views-packs.js', '/views-extra.js', '/views-source.js',
   '/icon.svg', '/icon-192.png', '/manifest.webmanifest',
   '/vendor/leaflet/leaflet.js', '/vendor/leaflet/leaflet.css', '/vendor/topojson-client.min.js', '/vendor/qrcode.js',
   '/vendor/countries-110m.json', '/vendor/countries-50m.json',

@@ -19,7 +19,7 @@ const MAX_LIVE = Number(process.env.LASTSYNC_MAX_LIVE) || 80;
 const QUOTA = (Number(process.env.LASTSYNC_QUOTA_MB) || 200) * 1024 * 1024;
 const ID_RE = /^[A-Za-z0-9_-]{12}$/;
 const UPLOADS = new Set(['/api/library/upload', '/api/maps/upload', '/api/packs/inspect', '/api/routes/gpx']);
-const GUEST_PATHS = /^\/(join(\.html|\.js)?$|api\/group\/|api\/public\/|api\/maps$|tiles\/|vt\/|glyphs\/)/;
+const GUEST_PATHS = /^\/(join(\.html|\.js)?$|api\/source|api\/group\/|api\/public\/|api\/maps$|tiles\/|vt\/|glyphs\/)/;
 
 fs.mkdirSync(ROOT, { recursive: true });
 // One shared offline encyclopedia for every visitor.

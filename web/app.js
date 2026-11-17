@@ -6,6 +6,7 @@ import { groupView, logView } from './views-group.js';
 import { packsView } from './views-packs.js';
 import { wikiView, wikiArticleView, kitView, aiView } from './views-extra.js';
 import * as ai from './ai.js';
+import { sourceView } from './views-source.js';
 import { offlineSearch } from './offline.js';
 
 const NAV = [
@@ -28,10 +29,11 @@ const NAV = [
   ['#/packs', 'pack', 'Packs'],
   ['#/ready', 'ready', 'Readiness'],
   ['#/settings', 'settings', 'Settings'],
+  ['#/source', 'code', 'Open source'],
 ];
 
 // Codes shown above each page title.
-const CODES = { '': 'OPS-00 // Command', search: 'OPS-01 // Search', ask: 'OPS-02 // Ask', map: 'OPS-03 // Maps', plan: 'OPS-04 // Plan', print: 'OPS-04 // Printout', library: 'INT-01 // Library', guide: 'INT-01 // Guide', doc: 'INT-01 // Document', notes: 'INT-02 // Notes', note: 'INT-02 // Note', group: 'COM-01 // Group', log: 'COM-02 // Log', packs: 'SYS-01 // Packs', ready: 'SYS-02 // Readiness', settings: 'SYS-03 // Settings', download: 'SYS-05 // Deploy', wiki: 'INT-03 // Encyclopedia', kit: 'OPS-05 // Gear', ai: 'SYS-04 // On-device AI' };
+const CODES = { '': 'OPS-00 // Command', search: 'OPS-01 // Search', ask: 'OPS-02 // Ask', map: 'OPS-03 // Maps', plan: 'OPS-04 // Plan', print: 'OPS-04 // Printout', library: 'INT-01 // Library', guide: 'INT-01 // Guide', doc: 'INT-01 // Document', notes: 'INT-02 // Notes', note: 'INT-02 // Note', group: 'COM-01 // Group', log: 'COM-02 // Log', packs: 'SYS-01 // Packs', ready: 'SYS-02 // Readiness', settings: 'SYS-03 // Settings', download: 'SYS-05 // Deploy', source: 'SYS-06 // Open source', wiki: 'INT-03 // Encyclopedia', kit: 'OPS-05 // Gear', ai: 'SYS-04 // On-device AI' };
 
 const ROUTES = {
   '': dashboard,
@@ -53,6 +55,7 @@ const ROUTES = {
   download: downloadView,
   wiki: (el, args, q) => (args.length ? wikiArticleView(el, args, q) : wikiView(el, args, q)),
   kit: kitView,
+  source: sourceView,
   ai: aiView,
 };
 
@@ -558,7 +561,7 @@ api('/api/status').then((s) => {
   state.public = s.mode === 'public';
   state.downloadUrl = s.downloadUrl;
   renderNav(currentNav());
-  if (state.public) mount($('#side-foot'), html`<span class="offline-dot"></span>DEMO UPLINK<br>DATA KEPT 7 DAYS IN THIS BROWSER`);
+  if (state.public) mount($('#side-foot'), html`<span class="offline-dot"></span>DEMO UPLINK<br>DATA KEPT 7 DAYS IN THIS BROWSER<br><a href="#/source" class="foot-link">OPEN SOURCE · MIT</a>`);
   renderHud();
 }).catch(() => {});
 startHud();
@@ -676,7 +679,7 @@ async function downloadView(el) {
           <dt>Account</dt><dd>None. Nothing is sent anywhere.</dd>
           <dt>Phones</dt><dd>Any phone browser on the same Wi-Fi</dd>
           <dt>AI</dt><dd>Built-in answers, or plug in a local model (Ollama, LM Studio)</dd>
-          <dt>Source</dt><dd>Open on GitHub</dd>
+          <dt>Source</dt><dd><a href="#/source">Open source · MIT license</a></dd>
         </dl>
       </section>
     </div>

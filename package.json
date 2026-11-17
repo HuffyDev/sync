@@ -2,6 +2,12 @@
   "name": "lastsync",
   "version": "1.0.0",
   "description": "Offline survival system for blackouts and prolonged outages.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HuffyDev/sync.git"
+  },
+  "homepage": "https://github.com/HuffyDev/sync",
   "private": true,
   "type": "module",
   "engines": {
@@ -10,6 +16,7 @@
   "scripts": {
     "start": "node server/index.js",
     "start:public": "node server/public.js",
-    "test": "node --test"
+    "test": "node --test",
+    "hashes": "node scripts/hashes.mjs"
   }
 }

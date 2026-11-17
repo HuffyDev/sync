@@ -143,3 +143,16 @@ test('retrieval for on-device AI returns passage text and prefers guides', async
   assert.equal(body.sources[0].kind, 'guide');
   assert.ok(body.sources[0].text.length > 200);
 });
+
+test('open source manifest lists every app file with correct hashes', async () => {
+  const { body } = await j('/api/source');
+  assert.equal(body.license, 'MIT');
+  const lic = body.files.find((f) => f.path === 'LICENSE');
+  assert.ok(lic);
+  const crypto = await import('node:crypto');
+  assert.equal(lic.sha256, crypto.createHash('sha256').update(fs.readFileSync(new URL('../LICENSE', import.meta.url))).digest('hex'));
+  assert.ok(!body.files.some((f) => /^data\//.test(f.path) || f.path.startsWith('.git/')), 'no user data or git internals');
+  const file = await fetch(base + '/api/source/file?path=server/index.js');
+  assert.equal(file.status, 200);
+  assert.equal((await fetch(base + '/api/source/file?path=../../etc/passwd')).status, 404);
+});

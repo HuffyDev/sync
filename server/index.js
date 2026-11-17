@@ -19,6 +19,7 @@ import { SearchIndex } from './search.js';
 import { ask, retrieve, URGENT_NOTE } from './ask.js';
 import { Wiki } from './wiki.js';
 import { VectorTiles, glyphs } from './vtiles.js';
+import { sourceManifest, readSourceFile } from './source.js';
 import { KIT, KIT_CATEGORIES, kitSummary } from './kit.js';
 import { Group, httpError } from './group.js';
 import * as packs from './packs.js';
@@ -919,6 +920,15 @@ export function createApp(opts = {}) {
   route('POST', '/api/vt/save', 'owner', ({ body }) => vt.saveArea(body));
   route('DELETE', '/api/vt/areas/:id', 'owner', ({ params }) => { if (publicMode) throw httpError(403, 'Saved areas are shared in the online demo.'); vt.removeArea(params.id); return { ok: true }; });
   route('POST', '/api/vt/clear', 'owner', async () => { if (publicMode) throw httpError(403, 'Not available in the online demo.'); await vt.clear(); return { ok: true }; });
+
+  // open source: what this copy is running, file by file
+  route('GET', '/api/source', 'open', () => sourceManifest(APP_DIR, VERSION));
+  route('GET', '/api/source/file', 'open', ({ res, query }) => {
+    const text = readSourceFile(APP_DIR, VERSION, String(query.path || ''));
+    if (text == null) throw httpError(404, 'Not a source file');
+    send(res, 200, text, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-cache' });
+    return undefined;
+  });
 
   // survival gear checklist
   route('GET', '/api/kit', 'owner', () => { const have = get('kit', { have: {} }).have || {}; return { categories: KIT_CATEGORIES, items: KIT, have, summary: kitSummary(have) }; });

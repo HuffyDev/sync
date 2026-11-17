@@ -600,3 +600,20 @@ a.stat:hover { background: var(--panel-2); color: inherit; }
 
 @media (max-width: 960px) { .ov-status { right: 12px; top: 60px; } }
 .ov-search { width: min(280px, calc(100% - 560px)); min-width: 170px; }
+
+/* ---------- open source ---------- */
+.os-hero { position: relative; padding: 34px; border: 1px solid var(--line-2); border-radius: var(--radius); background: radial-gradient(700px 260px at 90% 0%, rgba(143, 180, 217, 0.08), transparent 70%), linear-gradient(160deg, #18191c, #0f1012); }
+.os-hero h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 6px 0 10px; color: #fff; }
+.os-hero p { max-width: 62ch; color: var(--muted); font-size: 1.03rem; margin: 0; }
+.os-fp { background: var(--bg); border: 1px solid var(--line-2); border-radius: 4px; padding: 10px 12px; font-size: 0.74rem; color: var(--accent-2); overflow-wrap: anywhere; }
+.os-code { background: var(--bg); border: 1px solid var(--line-2); border-radius: 4px; padding: 12px 14px; font-family: var(--mono); font-size: 0.8rem; color: var(--text); overflow-x: auto; margin: 0 0 10px; white-space: pre; }
+.os-file { font-size: 0.78rem; line-height: 1.55; max-height: calc(100vh - 230px); overflow: auto; }
+.os-file .ln { display: inline-block; width: 3.4em; padding-right: 1em; text-align: right; color: var(--faint); user-select: none; }
+.os-dir { border-top: 1px solid var(--line); }
+.os-dir summary { display: flex; justify-content: space-between; padding: 9px 4px; cursor: pointer; list-style: none; font-size: 0.86rem; }
+.os-dir summary::-webkit-details-marker { display: none; }
+.os-dir summary:hover { background: rgba(255, 255, 255, 0.02); }
+.os-table td { font-size: 0.78rem; padding: 3px 6px; }
+.os-table a { text-decoration: none; }
+.foot-link { color: var(--muted); text-decoration: none; display: inline-block; margin-top: 6px; }
+.foot-link:hover { color: var(--accent-2); }

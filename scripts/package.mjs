@@ -31,6 +31,8 @@ for (const item of ['package.json', 'server', 'web', 'content', 'LICENSE']) {
   if (fs.existsSync(src)) fs.cpSync(src, path.join(out, 'app', item), { recursive: true });
 }
 fs.copyFileSync(nodeExe, path.join(out, 'runtime', 'node.exe'));
+// Record which commit this build came from (shown on the Open source page).
+fs.writeFileSync(path.join(out, 'app', 'BUILD.json'), JSON.stringify({ commit: process.env.GITHUB_SHA || null, builtAt: new Date().toISOString() }, null, 2));
 
 fs.writeFileSync(path.join(out, 'LASTSYNC.cmd'), [
   '@echo off',

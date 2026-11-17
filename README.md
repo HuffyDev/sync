@@ -1,5 +1,7 @@
 # LASTSYNC
 
+**Free and open source (MIT).** Every file is in this repository, and every running copy shows the exact commit and file fingerprints it is using on its **Open source** page.
+
 An offline survival system for blackouts, prolonged outages and infrastructure collapse. Keep it on a Windows PC or a USB drive, set it up while you still have internet, and open it after the internet is gone.
 
 Everything runs on the PC at `http://localhost:8787`. No account, no cloud, no install, no npm dependencies.
@@ -80,6 +82,29 @@ Import raster MBTiles (PNG/JPG/WebP tiles), for example made in QGIS or MapTiler
 **Connect to Replit:** on replit.com choose *Create App → Import from GitHub*, pick `HuffyDev/sync`, and press **Run**. The included `.replit` pulls the latest code and starts the demo on port 8787. To publish, use **Deploy → Reserved VM**, since group sessions keep live connections open. Optional environment variables: `LASTSYNC_TTL_DAYS`, `LASTSYNC_QUOTA_MB`, `LASTSYNC_MAX_WORKSPACES`, `LASTSYNC_DOWNLOAD_URL`.
 
 Replit's disk is reset when the app is redeployed, so demo data is temporary by design.
+
+## Open source
+
+LASTSYNC is released under the [MIT license](LICENSE): use it, copy it, change it and share it, including commercially, as long as the license notice stays with it. Bundled third-party components keep their own licenses (see `web/vendor/NOTICES.txt`).
+
+Every copy — the Windows app, a self-hosted server or the online demo — has an **Open source** page that lists:
+
+- the version and the git commit it is running (linked to that commit on GitHub);
+- every source file with its SHA-256 fingerprint, readable in the browser;
+- one combined fingerprint for the whole app;
+- the only outside services it ever contacts, and when.
+
+To check a running copy against the public code:
+
+```bash
+git clone https://github.com/HuffyDev/sync.git
+```
+
+```bash
+cd sync && git checkout <commit shown on the page> && npm run hashes
+```
+
+The last line printed is the combined fingerprint; if it matches the page, the running copy is identical to the public source.
 
 ## Develop
 
