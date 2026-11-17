@@ -222,7 +222,7 @@ export function createApp(opts = {}) {
       add({ id: 'pack:' + p.id, group: 'Packs', label: `${p.name} (v${p.version})`, ok: p.status === 'verified' || p.status === 'unsigned' || p.status === 'signed-untrusted',
         optional: true, detail: `${statusLabel(p.status)} · published ${String(p.published).slice(0, 10)}${p.published < yearAgo ? ' — over a year old, look for an update' : ''}`, href: '#/packs' });
     }
-    const lan = publicMode ? [{ address: 'online demo' }] : lanAddresses();
+    const lan = publicMode ? [{ address: 'the website' }] : lanAddresses();
     add({ id: 'net', group: 'Group', label: lan.length ? 'Can host a group on local Wi-Fi' : 'Not connected to any local network', ok: lan.length > 0, optional: true,
       detail: lan.length ? `Phones can reach this PC at ${lan.map((a) => a.address).join(', ')}` : 'To host a group, connect to a router (it works without internet) or turn on a Wi-Fi hotspot.', href: '#/group' });
     const ws = wiki.status();
@@ -621,7 +621,7 @@ export function createApp(opts = {}) {
   };
 
   // status & dashboard
-  route('GET', '/api/status', 'owner', () => ({ version: VERSION, guides: guides.size, lan: publicMode ? [] : lanAddresses(), port, group: group.active, dataDir: publicMode ? 'your browser session on this demo server' : DATA_DIR, mode: publicMode ? 'public' : 'local', downloadUrl: DOWNLOAD_URL }));
+  route('GET', '/api/status', 'owner', () => ({ version: VERSION, guides: guides.size, lan: publicMode ? [] : lanAddresses(), port, group: group.active, dataDir: publicMode ? 'your browser session on this server' : DATA_DIR, mode: publicMode ? 'public' : 'local', downloadUrl: DOWNLOAD_URL }));
   route('GET', '/api/dashboard', 'owner', () => {
     const r = readiness();
     const plan = get('plan', defaults.plan);
@@ -773,7 +773,7 @@ export function createApp(opts = {}) {
     store.update('settings', defaults.settings, (s) => {
       if (body.hostName !== undefined) s.hostName = str(body.hostName, 40);
       if (body.ai) {
-        if (publicMode && body.ai.provider === 'openai') throw httpError(400, 'Connecting an AI model is turned off in the online demo. Download the offline app to use your own model.');
+        if (publicMode && body.ai.provider === 'openai') throw httpError(400, 'Connecting your own AI model is turned off on the website. Download the app to use your own model.');
         const cur = { ...defaults.settings.ai, ...(s.ai || {}) };
         s.ai = {
           provider: body.ai.provider === 'openai' ? 'openai' : 'builtin',
@@ -789,7 +789,7 @@ export function createApp(opts = {}) {
     return settingsView();
   });
   route('POST', '/api/settings/test-ai', 'owner', async () => {
-    if (publicMode) return { ok: false, error: 'Turned off in the online demo.' };
+    if (publicMode) return { ok: false, error: 'Turned off on the website.' };
     const s = get('settings', defaults.settings);
     const passages = [{ title: 'Test', subtitle: '', text: 'Boil water at a rolling boil for 1 minute to make it safe to drink.' }];
     const { modelAnswer } = await import('./ask.js');
@@ -894,7 +894,7 @@ export function createApp(opts = {}) {
   // offline encyclopedia
   route('GET', '/api/wiki', 'owner', () => wiki.status());
   route('POST', '/api/wiki/download', 'owner', ({ body }) => wiki.start(Array.isArray(body.titles) ? body.titles.map(String) : null, { refresh: !!body.refresh && !publicMode }));
-  route('DELETE', '/api/wiki/:id', 'owner', ({ params }) => { if (publicMode) throw httpError(403, 'The shared encyclopedia can\'t be changed in the online demo.'); wiki.remove(params.id); return { ok: true }; });
+  route('DELETE', '/api/wiki/:id', 'owner', ({ params }) => { if (publicMode) throw httpError(403, 'The shared encyclopedia can\'t be changed on the website.'); wiki.remove(params.id); return { ok: true }; });
   const wikiArticle = ({ params }) => { const a = wiki.article(params.id); if (!a) throw httpError(404, 'Article not saved'); return a; };
   route('GET', '/api/wiki/article/:id', 'owner', wikiArticle);
   route('GET', '/api/public/wiki', 'member', () => wiki.status());
@@ -925,8 +925,8 @@ export function createApp(opts = {}) {
   route('GET', '/api/vt', 'owner', () => vt.status());
   route('POST', '/api/vt/estimate', 'owner', ({ body }) => ({ tiles: vt.estimate(body.bbox, body.minzoom ?? 0, body.maxzoom ?? 14), limit: vt.maxSaveTiles }));
   route('POST', '/api/vt/save', 'owner', ({ body }) => vt.saveArea(body));
-  route('DELETE', '/api/vt/areas/:id', 'owner', ({ params }) => { if (publicMode) throw httpError(403, 'Saved areas are shared in the online demo.'); vt.removeArea(params.id); return { ok: true }; });
-  route('POST', '/api/vt/clear', 'owner', async () => { if (publicMode) throw httpError(403, 'Not available in the online demo.'); await vt.clear(); return { ok: true }; });
+  route('DELETE', '/api/vt/areas/:id', 'owner', ({ params }) => { if (publicMode) throw httpError(403, 'Saved areas are shared by everyone on the website.'); vt.removeArea(params.id); return { ok: true }; });
+  route('POST', '/api/vt/clear', 'owner', async () => { if (publicMode) throw httpError(403, 'Not available on the website.'); await vt.clear(); return { ok: true }; });
 
   // open source: what this copy is running, file by file
   route('GET', '/api/source', 'open', () => sourceManifest(APP_DIR, VERSION));

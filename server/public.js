@@ -198,7 +198,7 @@ async function handle(req, res) {
 
   if (asOwner && req.method === 'POST' && UPLOADS.has(pathname) && dirSize(wsDir(target)) > QUOTA) {
     req.resume();
-    return send(res, 413, { error: `The online demo keeps at most ${Math.round(QUOTA / 1048576)} MB per visitor. Delete something, or download the offline app.` });
+    return send(res, 413, { error: `The website keeps at most ${Math.round(QUOTA / 1048576)} MB per visitor. Delete something, or download the app.` });
   }
 
   req.lsOwner = asOwner;

@@ -101,8 +101,8 @@
 cd sync
 npm start</code></pre>
   <p>Then open <code>http://localhost:8787</code>. Set <code>PORT</code> to change the port and <code>LASTSYNC_DATA</code> to choose where data is stored.</p>
-  <h2 id="qs-online">Online demo</h2>
-  <p>Try it in the browser first: <a href="/?enter=1">open the app</a>. Each visitor gets a private workspace, kept for 7 days. Use the offline app for anything you want to rely on.</p>
+  <h2 id="qs-online">In the browser</h2>
+  <p>Use it right away on the website: <a href="/?enter=1">open the app</a>. Each visitor gets a private workspace tied to their browser. Download the app for anything you need to keep working with no internet.</p>
   <h2 id="qs-first">First things to do</h2>
   <ol class="dx-steps">
     <li><b>My plan:</b> add contacts, meeting points and your grab list. Print the one-page sheet.</li>
@@ -312,7 +312,7 @@ solana transfer &lt;RECIPIENT&gt; 0.5 --sign-only \
     <li>Each person enters a name and is in.</li>
   </ol>
   <p>The invite code is required, attempts are rate-limited, and you can make a new code or remove a member at any time. Phones only see the group, guides, the encyclopedia, map tiles and the relay, never your notes, plan, documents or settings.</p>
-  <h2 id="groups-online">In the online demo</h2>
+  <h2 id="groups-online">On the website</h2>
   <p>Invites are links. Anyone who opens one joins your group as a guest with the same limited access as a phone on Wi-Fi.</p>
 </section>
 
@@ -371,7 +371,7 @@ solana transfer &lt;RECIPIENT&gt; 0.5 --sign-only \
       <tr><td><code>LASTSYNC_DOWNLOAD_URL</code></td><td>GitHub releases</td><td>Link used by the download page</td></tr>
     </tbody>
   </table>
-  <h2 id="config-public">Online demo only</h2>
+  <h2 id="config-public">Website hosting only</h2>
   <table class="dx-ref">
     <thead><tr><th>Variable</th><th>Default</th><th>Purpose</th></tr></thead>
     <tbody>
@@ -380,7 +380,7 @@ solana transfer &lt;RECIPIENT&gt; 0.5 --sign-only \
       <tr><td><code>LASTSYNC_MAX_WORKSPACES</code></td><td></td><td>Cap on workspaces</td></tr>
       <tr><td><code>LASTSYNC_MAX_LIVE</code></td><td></td><td>Cap on workspaces held in memory</td></tr>
       <tr><td><code>LASTSYNC_MAP_CACHE_MB</code></td><td><code>2048</code></td><td>Shared map tile cache</td></tr>
-      <tr><td><code>LASTSYNC_FRAME_ANCESTORS</code></td><td>Replit</td><td>Sites allowed to embed the demo</td></tr>
+      <tr><td><code>LASTSYNC_FRAME_ANCESTORS</code></td><td>Replit</td><td>Sites allowed to embed the website</td></tr>
     </tbody>
   </table>
 </section>

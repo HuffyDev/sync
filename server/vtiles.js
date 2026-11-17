@@ -12,6 +12,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { newId, nowIso } from './store.js';
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const TILEJSON = process.env.LASTSYNC_VECTOR_TILEJSON || 'https://tiles.openfreemap.org/planet';
 const UA = 'LASTSYNC/1.0 (offline survival app; https://github.com/HuffyDev/sync)';
 const MAX_Z = 14;
@@ -39,6 +40,9 @@ export class VectorTiles {
     this.maxSaveTiles = maxSaveTiles;
     this.meta = null;
     this.online = null; // last known reachability of the host
+    this.fails = 0;     // consecutive failed fetches
+    this.misses = 0;    // tiles that could not be served (the map reloads them when back online)
+    this.metaAt = 0;
     this.inflight = new Map();
     this.active = 0;
     this.queue = [];
@@ -51,20 +55,22 @@ export class VectorTiles {
 
   areas() { return this.readJson('areas.json', []); }
 
-  async tilejson() {
-    if (this.meta) return this.meta;
+  // The tile host publishes versioned URLs, so the template is refreshed every few hours.
+  async tilejson(force = false) {
+    if (this.meta && !force && Date.now() - this.metaAt < 6 * 3600e3) return this.meta;
+    const prev = this.meta;
     try {
       const res = await fetch(TILEJSON, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(12000) });
       if (!res.ok) throw new Error('status ' + res.status);
       const tj = await res.json();
       if (!Array.isArray(tj.tiles) || !tj.tiles[0]) throw new Error('no tile URL');
       this.meta = { tiles: tj.tiles[0], maxzoom: Math.min(MAX_Z, tj.maxzoom ?? MAX_Z), attribution: tj.attribution || '' };
+      this.metaAt = Date.now();
       this.writeJson('tilejson.json', this.meta);
-      this.online = true;
     } catch {
-      this.online = false;
-      this.meta = this.readJson('tilejson.json', null); // last known template, if any
-      if (this.meta) setTimeout(() => { this.meta = null; }, 60000); // retry the host later
+      // Keep using the last known template; try the host again in a minute.
+      this.meta = prev || this.readJson('tilejson.json', null);
+      this.metaAt = Date.now() - 6 * 3600e3 + 60e3;
     }
     return this.meta;
   }
@@ -91,27 +97,40 @@ export class VectorTiles {
   release() { this.active--; const next = this.queue.shift(); if (next) next(); }
 
   async fetchTile(z, x, y) {
-    if (this.online === false && this.lastFail && Date.now() - this.lastFail < 15000) return null;
-    const meta = await this.tilejson();
-    if (!meta) return null;
+    // Only stop trying for a moment once the host has failed several times in a row.
+    if (this.fails >= 4 && Date.now() - this.lastFail < 5000) { this.misses++; return null; }
+    let meta = await this.tilejson();
+    if (!meta) { this.online = false; this.misses++; return null; }
     await this.slot();
     try {
-      const url = meta.tiles.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-      const res = await fetch(url, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(15000) });
-      if (res.status === 204 || res.status === 404) { this.online = true; return this.store(z, x, y, Buffer.alloc(0)); }
-      if (!res.ok) throw new Error('status ' + res.status);
-      let buf = Buffer.from(await res.arrayBuffer());
-      if (buf[0] === 0x1f && buf[1] === 0x8b) buf = zlib.gunzipSync(buf);
-      this.online = true;
-      return this.store(z, x, y, buf);
-    } catch {
-      this.online = false;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const url = meta.tiles.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+        let res;
+        try { res = await fetch(url, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(15000) }); }
+        catch { await sleep(400 * (attempt + 1)); continue; }
+        if (res.status === 404 && attempt === 0) {
+          // The tile set may have moved to a new version: refresh the template once.
+          const fresh = await this.tilejson(true);
+          if (fresh && fresh.tiles !== meta.tiles) { meta = fresh; continue; }
+        }
+        if (res.status === 204 || res.status === 404) { this.ok(); return this.store(z, x, y, Buffer.alloc(0)); }
+        if (!res.ok) { await sleep(400 * (attempt + 1)); continue; }
+        let buf = Buffer.from(await res.arrayBuffer());
+        if (buf[0] === 0x1f && buf[1] === 0x8b) buf = zlib.gunzipSync(buf);
+        this.ok();
+        return this.store(z, x, y, buf);
+      }
+      this.fails++;
       this.lastFail = Date.now();
+      if (this.fails >= 4) this.online = false;
+      this.misses++;
       return null;
     } finally {
       this.release();
     }
   }
+
+  ok() { this.fails = 0; this.online = true; }
 
   async store(z, x, y, buf) {
     if (this.stats.bytes + buf.length > this.capBytes) return buf; // serve but don't keep
@@ -126,7 +145,7 @@ export class VectorTiles {
   }
 
   status() {
-    return { online: this.online, cached: this.stats, areas: this.areas(), job: this.job, maxZoom: MAX_Z, attribution: this.meta?.attribution || '© OpenMapTiles © OpenStreetMap contributors' };
+    return { online: this.online, misses: this.misses, cached: this.stats, areas: this.areas(), job: this.job, maxZoom: MAX_Z, attribution: this.meta?.attribution || '© OpenMapTiles © OpenStreetMap contributors' };
   }
 
   estimate(bbox, minz, maxz) { return tilesForBounds(bbox, minz, Math.min(MAX_Z, maxz)).length; }

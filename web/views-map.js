@@ -334,8 +334,11 @@ export async function mapView(el, _args, query) {
     const s = await api('/api/vt').catch(() => null);
     if (!s || !alive) return;
     const z = map.getZoom();
-    const st = s.online ? ['ok', 'Street map live'] : s.cached.tiles ? ['warn', 'Offline — showing saved areas'] : ['bad', 'Offline — world outline only'];
+    const st = s.online ? ['ok', 'Street map live'] : s.online == null ? ['warn', 'Connecting to the street map…'] : s.cached.tiles ? ['warn', 'No connection to the map server. Showing saved areas'] : ['bad', 'No connection to the map server. World outline only'];
     mount($('#mstatus'), html`<span class="led-dot ${st[0]}"></span>${st[1]}${z < 4 && vis.streets ? ' · zoom in for streets' : ''}`);
+    // Tiles that failed earlier are blank in the map; load them again once the host answers.
+    if (s.online && (s.misses !== vtStatus.misses || vtStatus.online !== true)) { try { map.refreshTiles('omt'); } catch {} }
+    vtStatus.misses = s.misses;
     const changed = vtStatus.online !== s.online || vtStatus.areas?.length !== s.areas.length || vtStatus.cached?.tiles !== s.cached.tiles;
     vtStatus.online = s.online; vtStatus.cached = s.cached; vtStatus.areas = s.areas; vtStatus.job = s.job;
     // Refresh the side panel unless the person is filling in a form there.
@@ -561,7 +564,7 @@ export async function mapView(el, _args, query) {
     mount(side, html`
       <section class="card stack">
         <div class="card-title"><h2>Offline street map</h2><span class="badge ${vtStatus.online ? 'ok' : vtStatus.cached?.tiles ? 'warn' : 'bad'}">${vtStatus.online ? 'live' : vtStatus.cached?.tiles ? 'cached' : 'offline'}</span></div>
-        <p class="muted" style="margin:0;font-size:.88rem">Every area you look at while online is kept on ${isPublic ? 'the demo server' : 'this PC'}. Save your whole town ahead of time so it works with no signal.</p>
+        <p class="muted" style="margin:0;font-size:.88rem">Every area you look at while online is kept on ${isPublic ? 'the server' : 'this PC'}. Save your whole town ahead of time so it works with no signal.</p>
         <div class="mono faint" style="font-size:.7rem;letter-spacing:.06em">${(vtStatus.cached?.tiles || 0).toLocaleString()} map tiles saved (${fmtBytes(vtStatus.cached?.bytes || 0)})</div>
         ${job.running ? html`<div><div class="row between"><strong style="font-size:.9rem">Saving ${job.name}</strong><span class="mono">${job.done}/${job.total}</span></div><div class="progress" style="margin-top:6px"><i style="width:${Math.round((100 * job.done) / job.total)}%"></i></div></div>`
           : html`<div class="row" style="flex-wrap:nowrap"><input id="area-name" placeholder="Name this area, e.g. Home town" maxlength="80"><button class="btn small primary" id="save-area">${icon('download')}Save</button></div><small class="muted mono" id="save-est" style="font-size:.7rem"></small>`}
@@ -700,6 +703,9 @@ export async function mapView(el, _args, query) {
   const onGps = () => { drawMe(); renderGps(); renderCoords(); };
   gps.listeners.add(onGps);
   const tick = setInterval(() => { renderGps(); renderCoords(); renderStatus(); }, 15000);
+  // Check the street map soon after the view settles, so missing tiles are retried quickly.
+  let idleTimer = null;
+  map.on('idle', () => { clearTimeout(idleTimer); idleTimer = setTimeout(renderStatus, 2500); });
   if (vtStatus.job?.running) pollSave();
 
   const pinQ = query.get('pin');

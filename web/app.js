@@ -512,7 +512,7 @@ async function settingsView(el) {
   if (status.mode === 'public') {
     f.querySelector('input[value=openai]').disabled = true;
     f.querySelector('input[value=builtin]').checked = true;
-    f.querySelector('input[value=openai]').closest('.row').insertAdjacentHTML('afterend', '<div class="notice warn">Connecting an AI model is turned off in the online demo. In the offline app you can connect a local model (Ollama, LM Studio, llama.cpp) that keeps working in a blackout.</div>');
+    f.querySelector('input[value=openai]').closest('.row').insertAdjacentHTML('afterend', '<div class="notice warn">Connecting your own AI model is turned off on the website. In the downloaded app you can connect a local model (Ollama, LM Studio, llama.cpp) that keeps working in a blackout.</div>');
   }
   const sync = () => { $('#model-fields').style.display = f.provider.value === 'openai' ? '' : 'none'; };
   sync();
@@ -588,7 +588,7 @@ api('/api/status').then((s) => {
   state.downloadUrl = s.downloadUrl;
   if (state.public) { const brand = document.querySelector('.brand'); if (brand) { brand.href = '/welcome'; brand.title = 'Front page'; } }
   renderNav(currentNav());
-  if (state.public) mount($('#side-foot'), html`<span class="offline-dot"></span>Online demo. Your data is kept for 7 days in this browser.<br><a href="#/source" class="foot-link">Open source</a><a href="/docs" class="foot-link" target="_blank">Docs</a><a href="https://x.com/syncoffchain" class="foot-link" target="_blank" rel="noopener">X</a>`);
+  if (state.public) mount($('#side-foot'), html`<span class="offline-dot"></span>Your data is saved in this browser.<br><a href="#/source" class="foot-link">Open source</a><a href="/docs" class="foot-link" target="_blank">Docs</a><a href="https://x.com/syncoffchain" class="foot-link" target="_blank" rel="noopener">X</a>`);
   renderHud();
 }).catch(() => {});
 startHud();
@@ -644,7 +644,7 @@ function renderHud() {
     ${g?.help ? html`<a class="hud-item alert" href="#/group"><b>${g.help.fromName} needs help</b></a>` : g ? html`<a class="hud-item ok" href="#/group"><span class="led"></span><span class="k">Group</span><b>live</b></a>` : ''}
     ${r != null ? html`<a class="hud-item ${r >= 80 ? 'ok' : r >= 50 ? 'warn' : 'bad'}" href="#/ready"><span class="led"></span><span class="k">Ready</span><b>${r}%</b></a>` : ''}
     ${state.installPrompt ? html`<button class="hud-item ok" data-install style="background:none;border:0;border-right:1px solid var(--line);cursor:pointer;font:inherit;letter-spacing:inherit"><span class="led"></span><b>Install app</b></button>` : ''}
-    <span class="hud-item"><b>${state.public ? 'Online demo' : 'Running on this computer'}</b></span>`);
+    ${state.public ? '' : html`<span class="hud-item"><b>Running on this computer</b></span>`}`);
 }
 function startHud() {
   renderHud();
@@ -674,10 +674,9 @@ async function downloadView(el) {
   mount(el, html`
     <div class="dl-hero">
       <div class="globe" aria-hidden="true"></div>
-      <p class="kicker">SYS-04 // Deploy offline</p>
       <h1>When the grid goes dark, this keeps working.</h1>
-      <p>This website is a demo. The real LASTSYNC runs entirely on your own Windows PC or a USB stick — guides, search, Ask, maps, your plan and the group check-in all keep working with no internet and no cell service.</p>
-      <div class="row" style="margin-top:18px"><a class="btn primary" href="${url}" target="_blank" rel="noopener">${icon('download')}Download for Windows</a><span class="muted mono" style="font-size:.75rem;letter-spacing:.1em">FREE · NO ACCOUNT · ~40 MB ZIP</span></div>
+      <p>Download LASTSYNC to run it entirely on your own Windows PC or a USB stick — guides, search, Ask, maps, your plan and the group check-in all keep working with no internet and no cell service.</p>
+      <div class="row" style="margin-top:18px"><a class="btn primary" href="${url}" target="_blank" rel="noopener">${icon('download')}Download for Windows</a><span class="muted" style="font-size:.85rem">Free, no account, about 40 MB</span></div>
     </div>
     <div class="grid grid-3" style="margin-top:14px">
       <section class="card"><h2>Install in 60 seconds</h2>
