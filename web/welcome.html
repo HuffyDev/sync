@@ -12,17 +12,18 @@
   <script src="/vendor/topojson-client.min.js"></script>
   <script type="module" src="/landing.js"></script>
   <script type="module" src="/relay-anim.js"></script>
+  <script type="module" src="/hub-anim.js"></script>
 </head>
 <body class="lp">
   <header class="lp-nav">
-    <a class="lp-brand" href="/welcome"><img src="/logo.png" alt="" width="26" height="26"><span>LASTSYNC</span></a>
+    <a class="lp-brand" href="/welcome" title="Home page"><img src="/logo.png" alt="" width="26" height="26"><span>LASTSYNC</span></a>
     <nav class="lp-links" aria-label="Sections">
-      <a href="#relay">Crypto relay</a><a href="#features">Features</a><a href="#token">Token</a><a href="/docs">Docs</a><a href="#open">Open source</a>
+      <a href="#hub">The hub</a><a href="#relay">Crypto relay</a><a href="#token">Token</a><a href="#features">Features</a><a href="/docs">Docs</a><a href="#open">Open source</a>
     </nav>
     <div class="lp-nav-cta">
       <a class="btn small ghost lp-social" href="https://x.com/syncoffchain" target="_blank" rel="noopener" aria-label="LASTSYNC on X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77L17.75 3zm-1.08 16.2h1.7L7.4 4.73H5.57L16.67 19.2z"/></svg></a>
       <a class="btn small ghost" href="https://github.com/HuffyDev/sync" target="_blank" rel="noopener">GitHub</a>
-      <a class="btn small primary" href="/?enter=1">Launch app</a>
+      <a class="btn small primary" href="/?enter=1">Enter the hub</a>
     </div>
   </header>
 
@@ -38,6 +39,12 @@
           <a class="btn" href="#how-relay">How it works</a>
           <a class="btn ghost" href="https://github.com/HuffyDev/sync/blob/main/server/relay.js" target="_blank" rel="noopener">Read the code</a>
         </div>
+        <div class="ca-bar">
+          <span class="ca-bar-k"><i></i>CA</span>
+          <code class="ca-bar-addr" data-ca>G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync</code>
+          <button class="ca-bar-copy" type="button" data-copy-ca>Copy</button>
+          <a class="ca-bar-buy" href="https://pump.fun/coin/G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync" target="_blank" rel="noopener">Buy</a>
+        </div>
         <p class="lp-x-facts">Your keys never leave your wallet. Every signature is checked before anything is sent.</p>
         <div class="lp-txlog" aria-hidden="true"><div id="lp-txlines"></div></div>
       </div>
@@ -45,6 +52,125 @@
   </section>
 
   <main class="lp-main">
+
+    <section class="lp-hub" id="hub">
+      <div class="lp-hub-copy">
+        <h2>Everything lives in the hub.</h2>
+        <p>The relay, your maps, group check-ins and answers from your guides, all in one app on your own computer. Here's a quick look around.</p>
+        <ol class="hub-steps" id="hub-steps">
+          <li data-k="command"><b>Command</b><span>Readiness, alerts and the relay at a glance</span></li>
+          <li data-k="relay"><b>Crypto relay</b><span>Signed transactions waiting for a signal</span></li>
+          <li data-k="maps"><b>Maps</b><span>Saved streets, pins and range rings</span></li>
+          <li data-k="group"><b>Group</b><span>Phones join by QR and check in</span></li>
+          <li data-k="ask"><b>Ask</b><span>Answers quoted from your guides</span></li>
+        </ol>
+        <div class="lp-hub-cta">
+          <a class="btn primary lg" href="/?enter=1">Enter the hub</a>
+          <small>Free. Opens in your browser. No account.</small>
+        </div>
+      </div>
+      <div class="hub-device" aria-hidden="true">
+        <div class="hub-lid"><div class="hub-screen" id="hub-screen">
+          <div class="hub-app">
+            <aside class="hub-side">
+              <div class="hub-logo"><img src="/logo.png" alt=""><b>LASTSYNC</b></div>
+              <p>Operations</p>
+              <a data-k="command" class="on"><i class="hi-home"></i>Command</a>
+              <a data-k="relay"><i class="hi-send"></i>Crypto relay</a>
+              <a data-k="maps"><i class="hi-map"></i>Maps</a>
+              <p>Intel</p>
+              <a data-k="ask"><i class="hi-ask"></i>Ask</a>
+              <a><i class="hi-book"></i>Field guides</a>
+              <p>Comms</p>
+              <a data-k="group"><i class="hi-group"></i>Group</a>
+              <a><i class="hi-log"></i>Outage log</a>
+            </aside>
+            <div class="hub-main">
+              <div class="hub-bar"><b id="hub-clock">21:04</b><span><i class="ok"></i>Internet <em id="hub-net">offline</em></span><span><i class="ok"></i>Battery 84%</span><span class="hub-bar-r"><i class="warn"></i>Ready 82%</span></div>
+
+              <div class="hub-pane on" data-pane="command">
+                <h3>Command</h3>
+                <div class="hp-tiles">
+                  <div><small>Ready</small><b>82%</b><s><u style="width:82%"></u></s></div>
+                  <div><small>Group</small><b>4 of 5</b><em>checked in safe</em></div>
+                  <div><small>Relay</small><b>2</b><em>waiting for signal</em></div>
+                </div>
+                <div class="hp-banner"><b>Crypto relay</b><span>2 signed transactions are waiting. They'll be sent when any device finds a signal.</span><i class="hp-dots"><i></i><i></i><i></i></i></div>
+                <div class="hp-list"><small>Pinned</small><div><i class="dot blue"></i>Make water safe to drink</div><div><i class="dot green"></i>Rally point: Central Library</div></div>
+              </div>
+
+              <div class="hub-pane" data-pane="relay">
+                <h3>Crypto relay</h3>
+                <div class="hp-tx" id="hub-tx1"><span class="ch btc">BTC</span><div><b>0.0042 BTC</b><small>to bc1q…7k2f</small></div><em class="st warn">Waiting for signal</em></div>
+                <div class="hp-tx"><span class="ch sol">SOL</span><div><b>1.25 SOL</b><small>to 7xKX…m9Qa · durable nonce</small></div><em class="st warn">Waiting for signal</em></div>
+                <div class="hp-tx"><span class="ch sol">SOL</span><div><b>40 USDC</b><small>to 4fHn…2bLp</small></div><em class="st ok">Confirmed</em></div>
+                <div class="hp-actions"><span class="hp-btn primary" id="hub-send">Broadcast now</span><span class="hp-btn">Scan QR</span></div>
+              </div>
+
+              <div class="hub-pane" data-pane="maps">
+                <svg class="hp-map" viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice">
+                  <rect width="400" height="220" fill="#1b1d21"/>
+                  <path d="M-10 150 C 80 130, 120 190, 210 170 S 340 120, 420 140 L420 230 L-10 230Z" fill="#1d2a36"/>
+                  <g fill="#23262b"><rect x="40" y="30" width="46" height="30" rx="2"/><rect x="100" y="24" width="36" height="40" rx="2"/><rect x="236" y="36" width="54" height="26" rx="2"/><rect x="300" y="28" width="40" height="36" rx="2"/><rect x="50" y="86" width="40" height="34" rx="2"/><rect x="248" y="84" width="44" height="30" rx="2"/><rect x="150" y="82" width="34" height="28" rx="2"/></g>
+                  <g stroke="#3a3f47" stroke-width="7" fill="none" stroke-linecap="round"><path d="M-10 74 H 420"/><path d="M196 -10 V 160"/><path d="M-10 130 C 100 120, 160 130, 230 118 S 360 100, 420 104"/></g>
+                  <g stroke="#2c3036" stroke-width="3" fill="none"><path d="M94 -10 V 140"/><path d="M296 -10 V 120"/><path d="M-10 20 H 420"/></g>
+                  <circle class="hp-ring" cx="196" cy="74" r="10"/><circle class="hp-ring r2" cx="196" cy="74" r="10"/>
+                  <circle cx="196" cy="74" r="5" fill="#8fb4d9" stroke="#fff" stroke-width="2"/>
+                  <g class="hp-pin" transform="translate(70 70)"><circle r="4.5" fill="#f0566a"/><text x="8" y="3">Hospital</text></g>
+                  <g class="hp-pin" transform="translate(320 70)"><circle r="4.5" fill="#5fd49a"/><text x="-46" y="-8">Rally point</text></g>
+                  <g class="hp-pin new" id="hub-pin" transform="translate(262 128)"><circle r="4.5" fill="#e3c96b"/><text x="8" y="3">Water point</text></g>
+                </svg>
+                <div class="hp-mapchip">Saved area · Downtown · works offline</div>
+              </div>
+
+              <div class="hub-pane" data-pane="group">
+                <h3>Group</h3>
+                <div class="hp-group">
+                  <div class="hp-qr" id="hub-qr"></div>
+                  <div class="hp-members">
+                    <div><i class="dot green"></i><b>Maya</b><em>I'm safe · 2 min</em></div>
+                    <div><i class="dot blue"></i><b>Jordan</b><em>Meet here: Library</em></div>
+                    <div><i class="dot green"></i><b>Sam</b><em>I'm safe · 6 min</em></div>
+                    <div class="hp-new" id="hub-member"><i class="dot green"></i><b>Alex</b><em>I'm safe · just now</em><u>Received</u></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hub-pane" data-pane="ask">
+                <h3>Ask</h3>
+                <div class="hp-q"><span id="hub-q"></span><i class="hp-caret"></i></div>
+                <div class="hp-a" id="hub-a">
+                  <p>Bring clear water to a rolling boil for 1 minute (3 minutes above 2,000 m), then let it cool. <sup>1</sup></p>
+                  <p>If you can't boil it, add 2 drops of unscented household bleach per litre and wait 30 minutes. <sup>1</sup></p>
+                  <div class="hp-src"><sup>1</sup> Water: making it safe to drink · section 2</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="hub-cursor" id="hub-cursor"><svg viewBox="0 0 20 24"><path d="M2 1.5 L2 19 L6.6 14.8 L9.7 21.6 L12.6 20.3 L9.6 13.6 L16 13.6 Z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg><i></i></div>
+        </div></div>
+        <div class="hub-base"><i></i></div>
+      </div>
+    </section>
+
+    <section class="lp-token" id="token">
+      <div>
+        <h2>The LASTSYNC token</h2>
+        <p>The community token for LASTSYNC, on Solana. The app itself stays free and works the same for everyone.</p>
+        <small>This is the only official address. Also posted on <a href="https://x.com/syncoffchain" target="_blank" rel="noopener">@syncoffchain</a>.</small>
+      </div>
+      <div class="ca-card">
+        <div class="ca-head"><span>Contract address</span><span class="ca-chain"><i></i>Solana</span></div>
+        <div class="ca-row"><code class="ca-addr" data-ca>G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync</code><button class="btn small" type="button" data-copy-ca>Copy</button></div>
+        <div class="ca-links">
+          <a class="btn primary" href="https://pump.fun/coin/G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync" target="_blank" rel="noopener">Buy on Pump.fun</a>
+          <a class="btn" href="https://jup.ag/swap/SOL-G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync" target="_blank" rel="noopener">Buy on Jupiter</a>
+          <a class="btn" href="https://dexscreener.com/solana/G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync" target="_blank" rel="noopener">Chart</a>
+          <a class="btn ghost lp-social" href="https://x.com/syncoffchain" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77L17.75 3zm-1.08 16.2h1.7L7.4 4.73H5.57L16.67 19.2z"/></svg>@syncoffchain</a>
+        </div>
+      </div>
+    </section>
+
     <section class="lp-hero">
       <canvas id="lp-bg" aria-hidden="true"></canvas>
       <div class="lp-copy">
@@ -52,7 +178,7 @@
         <h1>Stay in sync<br><span>when the grid goes dark.</span></h1>
         <p class="lp-sub">Field guides, offline street maps, an on-device AI and household check-ins — running on your own machine, with no signal and no servers.</p>
         <div class="lp-ctas">
-          <a class="btn primary" href="/?enter=1">Launch the app</a>
+          <a class="btn primary" href="/?enter=1">Enter the hub</a>
           <a class="btn" href="https://github.com/HuffyDev/sync/releases/latest" target="_blank" rel="noopener">Download for Windows</a>
           <a class="btn ghost" href="https://github.com/HuffyDev/sync" target="_blank" rel="noopener">View source</a>
         </div>
@@ -110,23 +236,6 @@
       </div>
     </section>
 
-    <section class="lp-token" id="token">
-      <div>
-        <h2>The LASTSYNC token</h2>
-        <p>The community token for LASTSYNC, on Solana. The app itself stays free and works the same for everyone.</p>
-        <small>This is the only official address. Also posted on <a href="https://x.com/syncoffchain" target="_blank" rel="noopener">@syncoffchain</a>.</small>
-      </div>
-      <div class="ca-card">
-        <div class="ca-head"><span>Contract address</span><span class="ca-chain"><i></i>Solana</span></div>
-        <div class="ca-row"><code class="ca-addr" data-ca>G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync</code><button class="btn small" type="button" data-copy-ca>Copy</button></div>
-        <div class="ca-links">
-          <a class="btn primary" href="https://pump.fun/coin/G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync" target="_blank" rel="noopener">Buy on Pump.fun</a>
-          <a class="btn" href="https://jup.ag/swap/SOL-G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync" target="_blank" rel="noopener">Buy on Jupiter</a>
-          <a class="btn" href="https://dexscreener.com/solana/G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync" target="_blank" rel="noopener">Chart</a>
-          <a class="btn ghost lp-social" href="https://x.com/syncoffchain" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77L17.75 3zm-1.08 16.2h1.7L7.4 4.73H5.57L16.67 19.2z"/></svg>@syncoffchain</a>
-        </div>
-      </div>
-    </section>
   </main>
 
   <footer class="lp-foot">

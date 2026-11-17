@@ -1,4 +1,4 @@
-// Online demo host (Replit or any server). The offline app trusts "whoever is
+// Website host (Replit or any server). The offline app trusts "whoever is
 // sitting at this PC"; online there is no such person, so instead:
 //  - every visitor gets a private workspace, owned through a secret cookie;
 //  - people they invite to a group join that workspace as guests via a link;
@@ -13,7 +13,7 @@ import { VectorTiles } from './vtiles.js';
 
 const ROOT = path.resolve(process.env.LASTSYNC_DATA || path.join(APP_DIR, 'data', 'public'));
 const PORT = Number(process.env.PORT) || 8787;
-// Sites allowed to show the demo inside a frame (the host's preview pane).
+// Sites allowed to show the website inside a frame (the host's preview pane).
 const FRAME_ANCESTORS = process.env.LASTSYNC_FRAME_ANCESTORS || "'self' https://replit.com https://*.replit.com https://*.replit.dev https://*.repl.co https://*.replit.app";
 const TTL_MS = (Number(process.env.LASTSYNC_TTL_DAYS) || 7) * 864e5;
 const MAX_WORKSPACES = Number(process.env.LASTSYNC_MAX_WORKSPACES) || 500;
@@ -214,7 +214,7 @@ const server = http.createServer((req, res) => {
 });
 server.requestTimeout = 0;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`LASTSYNC online demo on port ${PORT} (workspaces in ${ROOT})`);
+  console.log(`LASTSYNC website on port ${PORT} (workspaces in ${ROOT})`);
 });
 // Hosts sometimes hand the app a different PORT than the one their preview
 // waits on; also answer on 8787 so either works.

@@ -35,7 +35,7 @@ export function createApp(opts = {}) {
   const CONTENT_DIR = opts.contentDir || path.join(APP_DIR, 'content');
   const DATA_DIR = opts.dataDir || process.env.LASTSYNC_DATA || path.join(APP_DIR, 'data');
   const port = opts.port ?? 8787;
-  // Public mode = the online demo (e.g. on Replit). Each visitor gets their own
+  // Public mode = the hosted website (e.g. on Replit). Each visitor gets their own
   // workspace (see server/public.js); uploads are capped and the AI-model
   // setting is off, because a model address typed by a visitor would let them
   // make this server call arbitrary URLs.
@@ -61,9 +61,9 @@ export function createApp(opts = {}) {
   const store = new Store(DATA_DIR);
   const group = new Group(store);
   const maps = new MapStore(store, dirs.maps);
-  // The encyclopedia is the same for everyone, so the online demo shares one copy.
+  // The encyclopedia is the same for everyone, so the website shares one copy.
   const wiki = opts.wiki || new Wiki(opts.wikiDir || path.join(DATA_DIR, 'wiki'));
-  // Street map tile cache — also shared between visitors in the online demo.
+  // Street map tile cache — also shared between visitors on the website.
   const vt = opts.vt || new VectorTiles(path.join(DATA_DIR, 'streetmap'));
   const glyph = glyphs(CONTENT_DIR);
   // Offline crypto relay: carries transactions you already signed; never holds keys.
@@ -563,7 +563,7 @@ export function createApp(opts = {}) {
     '.ico': 'image/x-icon', '.pdf': 'application/pdf', '.txt': 'text/plain; charset=utf-8', '.md': 'text/plain; charset=utf-8',
     '.webmanifest': 'application/manifest+json', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
   };
-  const GUEST_STATIC = /^\/(welcome\.html|docs\.html|docs\.js|landing\.js|relay-anim\.js|join\.html|join\.js|shared\.js|nmea\.js|manifest\.webmanifest|icon-(?:192|512)\.png|logo(?:-64)?\.png|vendor\/fonts\/[\w.-]+|styles\.css|icon\.svg|vendor\/leaflet\/[\w.-]+(?:\/[\w.-]+)?|vendor\/countries-(?:110m|50m|10m)\.json|vendor\/topojson-client\.min\.js|basemap\.js)$/;
+  const GUEST_STATIC = /^\/(welcome\.html|docs\.html|docs\.js|hub-anim\.js|landing\.js|relay-anim\.js|join\.html|join\.js|shared\.js|nmea\.js|manifest\.webmanifest|icon-(?:192|512)\.png|logo(?:-64)?\.png|vendor\/fonts\/[\w.-]+|styles\.css|icon\.svg|vendor\/leaflet\/[\w.-]+(?:\/[\w.-]+)?|vendor\/countries-(?:110m|50m|10m)\.json|vendor\/topojson-client\.min\.js|basemap\.js)$/;
 
   async function serveStatic(req, res, pathname, owner) {
     let rel = pathname === '/' ? '/index.html' : pathname;
@@ -1056,7 +1056,7 @@ export function createApp(opts = {}) {
   async function handle(req, res) {
     res.setHeader('x-content-type-options', 'nosniff');
     res.setHeader('referrer-policy', 'no-referrer');
-    // The offline app refuses to be framed by other sites. The online demo may
+    // The offline app refuses to be framed by other sites. The website may
     // be shown inside the hosting site's preview frame (e.g. Replit).
     if (!opts.frameAncestors) res.setHeader('x-frame-options', 'SAMEORIGIN');
     res.setHeader('content-security-policy', "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com " + relayOrigins + "; frame-src 'self'; object-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors " + (opts.frameAncestors || "'self'"));

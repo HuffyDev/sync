@@ -586,7 +586,6 @@ watchGroup();
 api('/api/status').then((s) => {
   state.public = s.mode === 'public';
   state.downloadUrl = s.downloadUrl;
-  if (state.public) { const brand = document.querySelector('.brand'); if (brand) { brand.href = '/welcome'; brand.title = 'Front page'; } }
   renderNav(currentNav());
   if (state.public) mount($('#side-foot'), html`<span class="offline-dot"></span>Your data is saved in this browser.<br><a href="#/source" class="foot-link">Open source</a><a href="/docs" class="foot-link" target="_blank">Docs</a><a href="https://x.com/syncoffchain" class="foot-link" target="_blank" rel="noopener">X</a>`);
   renderHud();
