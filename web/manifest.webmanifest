@@ -2,7 +2,7 @@
   "name": "LASTSYNC \u2014 offline survival system",
   "short_name": "LASTSYNC",
   "description": "Field guides, encyclopedia, maps, AI and group check-ins that keep working when the internet doesn't.",
-  "start_url": "/",
+  "start_url": "/hub",
   "scope": "/",
   "display": "standalone",
   "background_color": "#15161a",

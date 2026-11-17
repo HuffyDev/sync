@@ -566,11 +566,13 @@ export function createApp(opts = {}) {
   const GUEST_STATIC = /^\/(welcome\.html|docs\.html|docs\.js|hub-anim\.js|landing\.js|relay-anim\.js|join\.html|join\.js|shared\.js|nmea\.js|manifest\.webmanifest|icon-(?:192|512)\.png|logo(?:-64)?\.png|vendor\/fonts\/[\w.-]+|styles\.css|icon\.svg|vendor\/leaflet\/[\w.-]+(?:\/[\w.-]+)?|vendor\/countries-(?:110m|50m|10m)\.json|vendor\/topojson-client\.min\.js|basemap\.js)$/;
 
   async function serveStatic(req, res, pathname, owner) {
-    let rel = pathname === '/' ? '/index.html' : pathname;
+    // "/" is the home page; the hub (the app itself) is at /hub.
+    if (owner && pathname === '/' && /[?&]enter=/.test(req.url)) { res.writeHead(302, { location: '/hub' }); return res.end(); }
+    let rel = pathname === '/' ? '/welcome.html' : pathname === '/hub' ? '/index.html' : pathname;
     if (rel === '/join') rel = '/join.html';
     if (rel === '/welcome') rel = '/welcome.html';
     if (rel === '/docs') rel = '/docs.html';
-    if (!owner && rel === '/index.html') {
+    if (!owner && (rel === '/index.html' || (!publicMode && pathname === '/'))) {
       // Phones that open the bare address go to the join page.
       res.writeHead(302, { location: '/join' });
       return res.end();

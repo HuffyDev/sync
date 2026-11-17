@@ -604,7 +604,7 @@ document.addEventListener('click', async (e) => {
 
 // Fetch everything once so the service worker keeps a copy for offline use.
 export async function saveForOffline(onProgress) {
-  const urls = ['/', '/api/dashboard', '/api/guides', '/api/wiki', '/api/plan', '/api/kit', '/api/settings', '/api/readiness', '/api/pins', '/api/routes', '/api/maps', '/api/notes', '/api/library', '/api/status', '/vendor/countries-10m.json'];
+  const urls = ['/hub', '/', '/api/dashboard', '/api/guides', '/api/wiki', '/api/plan', '/api/kit', '/api/settings', '/api/readiness', '/api/pins', '/api/routes', '/api/maps', '/api/notes', '/api/library', '/api/status', '/vendor/countries-10m.json'];
   const guides = await api('/api/guides').catch(() => []);
   urls.push(...guides.map((g) => '/api/guides/' + g.id));
   const w = await api('/api/wiki').catch(() => null);

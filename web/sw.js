@@ -2,9 +2,9 @@
 // connection. Everything is fetched from the network first (so you always get
 // the latest when online) and falls back to the last saved copy when offline.
 // Big static files (map data, libraries, tiles, images) are served from cache.
-const CACHE = 'lastsync-v6';
+const CACHE = 'lastsync-v7';
 const SHELL = [
-  '/', '/styles.css', '/app.js', '/shared.js', '/basemap.js', '/mapstyle.js', '/nmea.js', '/ai.js', '/offline.js',
+  '/hub', '/', '/styles.css', '/app.js', '/shared.js', '/basemap.js', '/mapstyle.js', '/nmea.js', '/ai.js', '/offline.js',
   '/views-library.js', '/views-map.js', '/views-plan.js', '/views-group.js', '/views-packs.js', '/views-extra.js', '/views-source.js', '/views-relay.js',
   '/logo.png', '/logo-64.png', '/icon-192.png', '/manifest.webmanifest',
   '/vendor/leaflet/leaflet.js', '/vendor/leaflet/leaflet.css', '/vendor/topojson-client.min.js', '/vendor/qrcode.js',
@@ -34,6 +34,6 @@ self.addEventListener('fetch', (e) => {
     fetch(req).then((res) => {
       if (res.ok && res.status === 200) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
       return res;
-    }).catch(async () => (await caches.match(req)) || (req.mode === 'navigate' ? caches.match('/') : Response.json({ error: 'You are offline and this has not been saved on this device yet.', offline: true }, { status: 503 }))),
+    }).catch(async () => (await caches.match(req)) || (req.mode === 'navigate' ? (await caches.match(new URL(req.url).pathname === '/' ? '/' : '/hub')) || caches.match('/hub') : Response.json({ error: 'You are offline and this has not been saved on this device yet.', offline: true }, { status: 503 }))),
   );
 });

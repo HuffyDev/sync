@@ -176,25 +176,28 @@ async function handle(req, res) {
     }
   }
 
-  if (ownerId && pathname === '/' && url.searchParams.has('enter')) { res.writeHead(302, { location: '/' }); return res.end(); }
+  // The address opens the home page. The hub (the app) lives at /hub; the first
+  // visit there creates the visitor's private workspace. "/?enter=1" is the
+  // old hub link and still works.
+  const enter = req.method === 'GET' && ((pathname === '/' && url.searchParams.has('enter')) || ((pathname === '/hub' || pathname === '/index.html') && !ownerId));
+  if (enter) {
+    if (!ownerId) {
+      const ws = createWorkspace(req);
+      if (!ws) return send(res, 429, { error: 'Too many new sessions from your network. Try again later.' });
+      addCookie(res, cookie(req, 'ls_owner', `${ws.id}.${ws.secret}`, Math.round(TTL_MS / 1000)));
+    }
+    res.writeHead(302, { location: '/hub' });
+    return res.end();
+  }
+  if (req.method === 'GET' && pathname === '/') {
+    req.url = '/welcome.html';
+    return blankApp().handle(req, res);
+  }
   let target = null;
   let asOwner = false;
   if (guestId && guestId !== ownerId && (GUEST_PATHS.test(pathname) || !ownerId)) target = guestId;
   else if (ownerId) { target = ownerId; asOwner = true; }
   else if (guestId) target = guestId;
-  else if (req.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
-    // First visit: show the front page. "Launch app" comes back with ?enter=1,
-    // which creates the visitor's private workspace and opens the app.
-    if (!url.searchParams.has('enter')) {
-      req.url = '/welcome.html';
-      return blankApp().handle(req, res);
-    }
-    const ws = createWorkspace(req);
-    if (!ws) return send(res, 429, { error: 'Too many new sessions from your network. Try again later.' });
-    addCookie(res, cookie(req, 'ls_owner', `${ws.id}.${ws.secret}`, Math.round(TTL_MS / 1000)));
-    res.writeHead(302, { location: '/' });
-    return res.end();
-  }
 
   if (asOwner && req.method === 'POST' && UPLOADS.has(pathname) && dirSize(wsDir(target)) > QUOTA) {
     req.resume();
