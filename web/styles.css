@@ -1233,3 +1233,5 @@ body.dx-js .dx-page.on { display: block; }
 .lp-hub { grid-template-columns: minmax(300px, 0.85fr) 1.5fr; }
 .lp-hub h2 { font-size: clamp(1.8rem, 3vw, 2.35rem); }
 @media (max-width: 960px) { .lp-hub { grid-template-columns: minmax(0, 1fr); } }
+/* text boxes use the UI typeface (codes and transactions keep .mono) */
+input:not(.mono):not([type="checkbox"]):not([type="radio"]), textarea:not(.mono), select { font-family: var(--font) !important; letter-spacing: 0 !important; }
