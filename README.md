@@ -6,6 +6,10 @@ An offline survival system for blackouts, prolonged outages and infrastructure c
 
 Everything runs on the PC at `http://localhost:8787`. No account, no cloud, no install, no npm dependencies.
 
+**Docs:** open `/docs` on any running copy · **X:** [@syncoffchain](https://x.com/syncoffchain)
+
+**Token (Solana):** `G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync` · [Pump.fun](https://pump.fun/coin/G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync) · [Jupiter](https://jup.ag/swap/SOL-G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync) · [Chart](https://dexscreener.com/solana/G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync). The app is free and does not need the token.
+
 ## Run it
 
 **Windows (portable ZIP):** download `LASTSYNC-windows.zip` from Releases, unzip, double-click `LASTSYNC.exe`. Your data is kept in the `data` folder next to it, so it travels on a USB drive.

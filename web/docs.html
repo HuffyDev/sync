@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LASTSYNC Docs</title>
+  <meta name="description" content="Documentation for LASTSYNC: the open-source offline survival system and offline crypto relay.">
+  <meta name="theme-color" content="#15161a">
+  <link rel="icon" href="/logo-64.png" type="image/png">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/docs.js"></script>
+</head>
+<body class="dx">
+  <header class="dx-top">
+    <button class="dx-menu" id="dx-menu" aria-label="Open the contents" aria-expanded="false"><span></span><span></span><span></span></button>
+    <a class="dx-brand" href="/docs"><img src="/logo.png" alt="" width="26" height="26"><span>LASTSYNC</span><em>Docs</em></a>
+    <label class="dx-search"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg><input id="dx-q" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs"><kbd>/</kbd></label>
+    <nav class="dx-toplinks" aria-label="Links">
+      <a href="#token">Token</a>
+      <a href="https://github.com/HuffyDev/sync" target="_blank" rel="noopener">GitHub</a>
+      <a class="dx-x" href="https://x.com/syncoffchain" target="_blank" rel="noopener" aria-label="LASTSYNC on X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77L17.75 3zm-1.08 16.2h1.7L7.4 4.73H5.57L16.67 19.2z"/></svg></a>
+      <a class="btn small primary" href="/?enter=1">Open the app</a>
+    </nav>
+  </header>
+
+  <div class="dx-shell">
+    <aside class="dx-side" id="dx-side" aria-label="Contents">
+      <div class="dx-results" id="dx-results" hidden></div>
+      <nav id="dx-nav">
+        <p class="dx-group">Getting started</p>
+        <a href="#introduction">Introduction</a>
+        <a href="#quick-start">Quick start</a>
+        <a href="#how-it-works">How it works</a>
+        <p class="dx-group">Crypto relay</p>
+        <a href="#relay">Overview</a>
+        <a href="#relay-bitcoin">Bitcoin</a>
+        <a href="#relay-solana">Solana</a>
+        <a href="#relay-broadcast">Broadcasting and status</a>
+        <p class="dx-group">Using LASTSYNC</p>
+        <a href="#search-ask">Search and Ask</a>
+        <a href="#ai">On-device AI</a>
+        <a href="#maps">Maps and GPS</a>
+        <a href="#encyclopedia">Encyclopedia</a>
+        <a href="#library">Library</a>
+        <a href="#plan">Household plan</a>
+        <a href="#gear">Gear and readiness</a>
+        <p class="dx-group">Groups</p>
+        <a href="#groups">Local groups</a>
+        <a href="#checkins">Check-ins and receipts</a>
+        <a href="#board-log">Status board and outage log</a>
+        <p class="dx-group">Sharing</p>
+        <a href="#packs">Packs</a>
+        <a href="#install">Install and offline use</a>
+        <p class="dx-group">Reference</p>
+        <a href="#configuration">Configuration</a>
+        <a href="#api">HTTP API</a>
+        <a href="#security">Access model</a>
+        <a href="#open-source">Open source</a>
+        <p class="dx-group">Project</p>
+        <a href="#token">Token</a>
+        <a href="#community">Community</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+    </aside>
+
+    <main class="dx-main" id="dx-main">
+
+<!-- ================= Getting started ================= -->
+<section class="dx-page" id="introduction" data-group="Getting started">
+  <h1>Introduction</h1>
+  <p class="dx-lead">LASTSYNC is an offline survival system. It runs on your own computer, keeps working when the internet and the phone network are down, and keeps your household in touch over local Wi-Fi.</p>
+  <p>Set it up while you are still online: fill in your plan, save your town's map, download the encyclopedia and an AI model. When the network goes down, everything you saved still works, from search and maps to group check-ins and the crypto relay.</p>
+  <div class="dx-cards">
+    <a class="dx-card" href="#relay"><b>Offline crypto relay</b><span>Carry signed Bitcoin and Solana transactions phone to phone, and send them the moment any device finds a signal.</span></a>
+    <a class="dx-card" href="#maps"><b>Offline street maps</b><span>Real streets, buildings and emergency places. Save an area once and use it with no signal.</span></a>
+    <a class="dx-card" href="#search-ask"><b>Search and Ask</b><span>Answers quoted from your saved guides, with citations. It says so when it doesn't know.</span></a>
+    <a class="dx-card" href="#groups"><b>Household check-ins</b><span>Phones scan a QR code and send I'm safe, Meet here or I need help over local Wi-Fi.</span></a>
+  </div>
+  <h2 id="principles">Principles</h2>
+  <ul>
+    <li><b>Local first.</b> Everything runs on your machine at <code>http://localhost:8787</code>. There is no account and no cloud service.</li>
+    <li><b>Honest answers.</b> Ask only answers from what you saved, quotes its source, and says when it can't help.</li>
+    <li><b>Your keys stay yours.</b> The relay only carries transactions that are already signed. It never asks for, stores or uses a private key.</li>
+    <li><b>Open source.</b> Every file is public under the MIT license, and every running copy shows the commit and file fingerprints it uses.</li>
+  </ul>
+</section>
+
+<section class="dx-page" id="quick-start" data-group="Getting started">
+  <h1>Quick start</h1>
+  <p class="dx-lead">Three ways to run LASTSYNC. They all use the same code.</p>
+  <h2 id="qs-windows">Windows (portable)</h2>
+  <ol class="dx-steps">
+    <li>Download <code>LASTSYNC-windows.zip</code> from the <a href="https://github.com/HuffyDev/sync/releases/latest" target="_blank" rel="noopener">latest release</a>.</li>
+    <li>Unzip it anywhere, including a USB drive.</li>
+    <li>Double-click <code>LASTSYNC.exe</code>. Your browser opens at <code>http://localhost:8787</code>.</li>
+  </ol>
+  <p>Your data is kept in the <code>data</code> folder next to the program, so the whole thing travels on a USB drive.</p>
+  <h2 id="qs-source">From source</h2>
+  <p>Requires Node.js 20 or newer (22.13 or newer to read imported MBTiles maps). There are no npm dependencies to install.</p>
+  <pre><code>git clone https://github.com/HuffyDev/sync.git
+cd sync
+npm start</code></pre>
+  <p>Then open <code>http://localhost:8787</code>. Set <code>PORT</code> to change the port and <code>LASTSYNC_DATA</code> to choose where data is stored.</p>
+  <h2 id="qs-online">Online demo</h2>
+  <p>Try it in the browser first: <a href="/?enter=1">open the app</a>. Each visitor gets a private workspace, kept for 7 days. Use the offline app for anything you want to rely on.</p>
+  <h2 id="qs-first">First things to do</h2>
+  <ol class="dx-steps">
+    <li><b>My plan:</b> add contacts, meeting points and your grab list. Print the one-page sheet.</li>
+    <li><b>Maps:</b> find your town and choose <i>Save this area</i>.</li>
+    <li><b>Encyclopedia:</b> download the 64 articles.</li>
+    <li><b>On-device AI:</b> download a model if your computer has a graphics chip with WebGPU.</li>
+    <li><b>Readiness:</b> check what's still missing.</li>
+  </ol>
+</section>
+
+<section class="dx-page" id="how-it-works" data-group="Getting started">
+  <h1>How it works</h1>
+  <p class="dx-lead">One computer runs LASTSYNC. Everyone else connects to it over the local network.</p>
+  <div class="dx-diagram" aria-hidden="true">
+    <div><b>Your computer</b><span>runs LASTSYNC on port 8787</span></div>
+    <i></i>
+    <div><b>Wi-Fi router or hotspot</b><span>works without internet while it has power</span></div>
+    <i></i>
+    <div><b>Phones</b><span>join in the browser by QR code</span></div>
+  </div>
+  <p>The computer at <code>localhost</code> gets the full app. Phones on the same network get a smaller page with check-ins, messages, the status board, the relay, guides and the outage log. A Wi-Fi router keeps working with no internet as long as it has power; a power bank or UPS can run one for hours. With no router, turn on <i>Mobile hotspot</i> in Windows.</p>
+  <h2 id="hiw-data">Where your data lives</h2>
+  <p>Everything is stored as plain files in the data folder: your plan, notes, pins, routes, saved maps, downloaded articles and the relay queue. Nothing is sent anywhere unless you use a feature that needs the internet, such as saving a map area or broadcasting a transaction.</p>
+  <h2 id="hiw-online">What needs the internet</h2>
+  <table>
+    <thead><tr><th>Needs internet once</th><th>Works offline afterwards</th></tr></thead>
+    <tbody>
+      <tr><td>Saving a map area</td><td>Viewing it, pins, routes, measuring, GPS</td></tr>
+      <tr><td>Downloading the encyclopedia</td><td>Reading, searching and asking about it</td></tr>
+      <tr><td>Downloading an AI model</td><td>Running it on your graphics chip</td></tr>
+      <tr><td>Broadcasting a transaction</td><td>Adding, checking and sharing it with your group</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================= Crypto relay ================= -->
+<section class="dx-page" id="relay" data-group="Crypto relay">
+  <h1>Crypto relay</h1>
+  <p class="dx-lead">Send crypto with no internet. Sign a transaction in your own wallet, and LASTSYNC carries it until any device in your group finds a signal.</p>
+  <ol class="dx-steps">
+    <li><b>Sign it offline,</b> in your own wallet. LASTSYNC never sees your keys.</li>
+    <li><b>Add it to LASTSYNC.</b> Paste it or scan its QR code. LASTSYNC decodes it and shows who gets paid and how much, and checks the signatures.</li>
+    <li><b>The group carries it.</b> It is shared with every phone in your local group.</li>
+    <li><b>First signal sends it.</b> Whichever device gets a connection first, the computer or any phone, broadcasts it. LASTSYNC then follows it to confirmation.</li>
+  </ol>
+  <h2 id="relay-supported">Supported</h2>
+  <table>
+    <thead><tr><th>Network</th><th>Format</th><th>What LASTSYNC reads</th></tr></thead>
+    <tbody>
+      <tr><td>Bitcoin</td><td>Raw transaction hex</td><td>Inputs, outputs and addresses (legacy, SegWit, Taproot), amounts, fee when known, txid</td></tr>
+      <tr><td>Solana</td><td>Base64 or base58, legacy or v0</td><td>SOL transfers, SPL token transfers, memos, fee payer, durable nonce, Ed25519 signatures</td></tr>
+    </tbody>
+  </table>
+  <div class="dx-note"><b>Only signed transactions are accepted.</b> LASTSYNC can't create, change or sign a transaction. It checks, stores, shares and broadcasts exactly what your wallet produced.</div>
+  <p>You can read every line of the relay in <a href="https://github.com/HuffyDev/sync/blob/main/server/relay.js" target="_blank" rel="noopener"><code>server/relay.js</code></a>.</p>
+</section>
+
+<section class="dx-page" id="relay-bitcoin" data-group="Crypto relay">
+  <h1>Bitcoin</h1>
+  <p class="dx-lead">Bitcoin transactions don't expire, so a signed one can be carried for as long as you need.</p>
+  <h2 id="btc-sign">Signing offline</h2>
+  <p>Use a wallet that can sign without a connection, such as Sparrow or Electrum on an offline computer, or a hardware wallet. Create the transaction while you still know your coins (or use a watch-only wallet), sign it, and export the <b>raw transaction hex</b>.</p>
+  <h2 id="btc-add">Adding it</h2>
+  <ol class="dx-steps">
+    <li>Open <b>Crypto relay</b> in the app.</li>
+    <li>Paste the hex, or use <i>Scan QR</i> with the camera.</li>
+    <li>Check the decoded outputs: every address and amount is shown before you queue it.</li>
+    <li>Choose <i>Add to relay</i>. Add a note if it helps the group.</li>
+  </ol>
+  <h2 id="btc-fees">Fees</h2>
+  <p>The fee is fixed when you sign. If the network is busy when a signal returns, a low fee can take a long time to confirm, so pick a fee that allows for that.</p>
+</section>
+
+<section class="dx-page" id="relay-solana" data-group="Crypto relay">
+  <h1>Solana</h1>
+  <p class="dx-lead">To send Solana offline, sign with a durable nonce. A normal transaction expires about a minute after it is signed.</p>
+  <h2 id="sol-nonce">Durable nonces</h2>
+  <p>A Solana transaction includes a recent blockhash, which goes stale within about 150 blocks. A <b>durable nonce</b> account replaces the blockhash with a stored value, so the transaction stays valid until that nonce is used. Set up a nonce account while you are online, then sign transfers against it when you are not.</p>
+  <pre><code>solana create-nonce-account nonce-keypair.json 0.0015
+solana transfer &lt;RECIPIENT&gt; 0.5 --sign-only \
+  --nonce &lt;NONCE_ACCOUNT&gt; --nonce-authority &lt;KEYPAIR&gt; \
+  --blockhash &lt;NONCE_VALUE&gt;</code></pre>
+  <p>LASTSYNC tells you which kind it received. Transactions with a durable nonce show <i>Uses a durable nonce</i>. Others show a warning that they will expire.</p>
+  <h2 id="sol-read">What is decoded</h2>
+  <ul>
+    <li>System program SOL transfers, with amounts in SOL.</li>
+    <li>SPL Token <code>Transfer</code> and <code>TransferChecked</code>, including the mint and decimals when present.</li>
+    <li>Memo instructions.</li>
+    <li>The fee payer and every signature, each verified with Ed25519 before the transaction is queued.</li>
+  </ul>
+</section>
+
+<section class="dx-page" id="relay-broadcast" data-group="Crypto relay">
+  <h1>Broadcasting and status</h1>
+  <p class="dx-lead">The computer tries every 20 seconds while anything is waiting. Phones with mobile data can send a transaction themselves.</p>
+  <h2 id="bc-status">Statuses</h2>
+  <table>
+    <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge warn">Waiting for signal</span></td><td>Checked and queued. It will be sent on the next connection.</td></tr>
+      <tr><td><span class="badge blue">Broadcast</span></td><td>Accepted by the network. LASTSYNC is waiting for a confirmation.</td></tr>
+      <tr><td><span class="badge ok">Confirmed</span></td><td>Included in a block.</td></tr>
+      <tr><td><span class="badge bad">Expired</span></td><td>A Solana blockhash went stale. Sign it again with a durable nonce.</td></tr>
+      <tr><td><span class="badge bad">Rejected</span></td><td>The network refused it, for example because the coins were already spent. The reason is shown.</td></tr>
+    </tbody>
+  </table>
+  <h2 id="bc-phone">From a phone</h2>
+  <p>On a phone in the group, open the <b>Relay</b> tab. Any waiting transaction has <i>Broadcast from this phone</i>, which sends it directly over the phone's own mobile data and reports the result to the group.</p>
+  <h2 id="bc-endpoints">Endpoints</h2>
+  <p>Bitcoin uses the mempool.space API and Solana uses the public mainnet RPC. Point them elsewhere, including your own node, with <code>LASTSYNC_BTC_API</code> and <code>LASTSYNC_SOLANA_RPC</code>. See <a href="#configuration">Configuration</a>.</p>
+</section>
+
+<!-- ================= Using LASTSYNC ================= -->
+<section class="dx-page" id="search-ask" data-group="Using LASTSYNC">
+  <h1>Search and Ask</h1>
+  <p class="dx-lead">Search everything you saved. Ask answers from it, with citations.</p>
+  <h2 id="sa-search">Search</h2>
+  <p>Search covers the 22 bundled guides, your documents and PDFs, notes, pins and the encyclopedia. It ranks with BM25 and understands survival synonyms, so <i>cleaning water</i> finds <i>disinfecting</i>. Results jump to the exact section, PDF page or note, and can be filtered by topic, pack and type.</p>
+  <h2 id="sa-ask">Ask</h2>
+  <p>Ask works with no model at all: it finds the best-matching section and quotes it as written, then lists related sections. It never stitches sentences from different sources together, because mixing a bleach dose for surfaces into drinking-water instructions is exactly the kind of mistake that hurts people.</p>
+  <p>With a model connected, Ask writes the answer from the passages it found and cites each one with a number. If the saved sources don't cover the question, it says so.</p>
+  <div class="dx-note">If a question sounds like an emergency, Ask shows your local emergency numbers first.</div>
+  <h2 id="sa-models">Connecting a model</h2>
+  <p>In <b>Settings</b>, add any OpenAI-compatible endpoint:</p>
+  <table>
+    <thead><tr><th>Runs on</th><th>Address</th></tr></thead>
+    <tbody>
+      <tr><td>Ollama</td><td><code>http://localhost:11434/v1</code></td></tr>
+      <tr><td>LM Studio</td><td><code>http://localhost:1234/v1</code></td></tr>
+      <tr><td>llama.cpp server</td><td><code>http://localhost:8080/v1</code></td></tr>
+    </tbody>
+  </table>
+  <p>Models on your own computer keep working in a blackout. Online APIs stop when the internet does, and Ask falls back to quoting.</p>
+</section>
+
+<section class="dx-page" id="ai" data-group="Using LASTSYNC">
+  <h1>On-device AI</h1>
+  <p class="dx-lead">Three models that run inside the browser on your computer's own graphics chip. No server and no account.</p>
+  <table>
+    <thead><tr><th>Model</th><th>Download</th><th>Good for</th></tr></thead>
+    <tbody>
+      <tr><td><b>Pocket</b></td><td>about 0.5 GB</td><td>Older laptops; short answers</td></tr>
+      <tr><td><b>Field</b></td><td>about 0.9 GB</td><td>Most computers; the best balance</td></tr>
+      <tr><td><b>Command</b></td><td>about 1.2 GB</td><td>Computers with a stronger graphics chip</td></tr>
+    </tbody>
+  </table>
+  <p>Models need a browser with WebGPU, such as a recent Chrome or Edge. They download once and are then stored by the browser for offline use. Ask sends the model only the passages it retrieved, and the model has to cite them.</p>
+</section>
+
+<section class="dx-page" id="maps" data-group="Using LASTSYNC">
+  <h1>Maps and GPS</h1>
+  <p class="dx-lead">A full street map that keeps working with no signal.</p>
+  <h2 id="maps-saving">Saving an area</h2>
+  <p>Every area you view while online is cached on your computer. To be sure, move the map to your town and choose <i>Save this area</i>: LASTSYNC estimates the size, then downloads it down to street level. Offline, the map uses saved areas first, then a built-in world map.</p>
+  <h2 id="maps-layers">What's on the map</h2>
+  <p>Streets with names, buildings (in 3D when tilted), water, parks, places, and emergency places: hospitals, pharmacies, police, fire stations, drinking water, shelters and fuel. Turn layers on and off from the layers panel.</p>
+  <h2 id="maps-tools">Tools</h2>
+  <ul>
+    <li><b>Pins</b> and <b>routes</b>, with walking time. Import routes from GPX.</li>
+    <li><b>Measure</b> distance and bearing between points.</li>
+    <li><b>Range rings</b> around any point.</li>
+    <li><b>Search</b> across pins, places, streets and coordinates.</li>
+    <li><b>Right-click</b> anywhere for coordinates and quick actions.</li>
+    <li><b>Follow</b>, rotate, tilt, north-up and full screen.</li>
+  </ul>
+  <h2 id="maps-gps">GPS</h2>
+  <p>Use the device's location, or plug in a USB GPS receiver and connect it with <i>USB GPS</i>, which reads standard NMEA sentences. A USB receiver needs no network at all. Phones on the local <code>http://</code> address can't use their own GPS because browsers require https for it; they mark their location by tapping the map instead.</p>
+  <h2 id="maps-import">Imported maps</h2>
+  <p>Raster MBTiles files (PNG, JPG or WebP tiles), for example made in QGIS or received in a pack, can be added as overlays. Map data © OpenMapTiles © OpenStreetMap contributors, served by OpenFreeMap.</p>
+</section>
+
+<section class="dx-page" id="encyclopedia" data-group="Using LASTSYNC">
+  <h1>Encyclopedia</h1>
+  <p class="dx-lead">64 survival-relevant Wikipedia articles, saved for offline reading.</p>
+  <p>Topics cover medicine, water, food, sanitation, shelter, power, navigation and communications, and disasters. Download them once while online; after that you can read, search and ask about them with no internet, and phones in your group can read them too. Article text is CC BY-SA 4.0, and image credits are kept.</p>
+</section>
+
+<section class="dx-page" id="library" data-group="Using LASTSYNC">
+  <h1>Library</h1>
+  <p class="dx-lead">22 bundled field guides, plus anything you add.</p>
+  <p>Guides cover water, power, food, first aid, shelter, sanitation, communications and emergency kits. Each one shows its publisher, date, version and sources. Add your own PDFs, text and Markdown files, and write notes. Everything you add is searchable and can be used by Ask.</p>
+</section>
+
+<section class="dx-page" id="plan" data-group="Using LASTSYNC">
+  <h1>Household plan</h1>
+  <p class="dx-lead">Who to contact, where to meet, and what to grab.</p>
+  <p>The plan holds contacts, meeting points with map locations, responsibilities, and grab, go and check-on checklists. It saves as you type.</p>
+  <h2 id="plan-print">Printable sheet</h2>
+  <p><b>My plan › Printable sheet</b> fits everything on one page: contacts, meeting points, a small map, checklists and quick facts. Print it and keep a copy somewhere that doesn't need power.</p>
+</section>
+
+<section class="dx-page" id="gear" data-group="Using LASTSYNC">
+  <h1>Gear and readiness</h1>
+  <h2 id="gear-list">Gear</h2>
+  <p>27 items across power, water, medical, communications, light and fire, shelter, food, tools and documents. Each explains why you need it, what to look for and a rough price. Mark what you have to get an essentials score.</p>
+  <h2 id="readiness">Readiness</h2>
+  <p>Readiness checks what is actually saved: guides, map areas, routes, an AI model, your plan and whether it's printed, pack dates, free disk space, the gear score and the local network. Each missing item links to where you fix it.</p>
+</section>
+
+<!-- ================= Groups ================= -->
+<section class="dx-page" id="groups" data-group="Groups">
+  <h1>Local groups</h1>
+  <p class="dx-lead">Your computer hosts the group. Phones join in their browser; nothing to install.</p>
+  <ol class="dx-steps">
+    <li>Open <b>Group</b> and choose <i>Start a session</i>.</li>
+    <li>Phones on the same Wi-Fi scan the QR code, or open the address shown and type the invite code.</li>
+    <li>Each person enters a name and is in.</li>
+  </ol>
+  <p>The invite code is required, attempts are rate-limited, and you can make a new code or remove a member at any time. Phones only see the group, guides, the encyclopedia, map tiles and the relay, never your notes, plan, documents or settings.</p>
+  <h2 id="groups-online">In the online demo</h2>
+  <p>Invites are links. Anyone who opens one joins your group as a guest with the same limited access as a phone on Wi-Fi.</p>
+</section>
+
+<section class="dx-page" id="checkins" data-group="Groups">
+  <h1>Check-ins and receipts</h1>
+  <p class="dx-lead">One tap to say where you are and how you're doing.</p>
+  <table>
+    <thead><tr><th>Check-in</th><th>Use it for</th></tr></thead>
+    <tbody>
+      <tr><td><b>I'm safe</b></td><td>Letting everyone know you're fine</td></tr>
+      <tr><td><b>Meet here</b></td><td>Setting the meeting point, with a map location</td></tr>
+      <tr><td><b>I need help</b></td><td>An alert on every device, until it's resolved</td></tr>
+      <tr><td><b>Ping</b></td><td>Asking someone to check in</td></tr>
+    </tbody>
+  </table>
+  <p><b>Received</b> only appears after the other device confirms it got the message. If it doesn't appear, assume they haven't seen it.</p>
+</section>
+
+<section class="dx-page" id="board-log" data-group="Groups">
+  <h1>Status board and outage log</h1>
+  <h2 id="board">Status board</h2>
+  <p>Shows who has checked in, when you last heard from each person, and the current meeting point.</p>
+  <h2 id="outage-log">Outage log</h2>
+  <p>A shared record of what happened, what has been checked and what still needs doing. It updates live on every device, so someone else can take over.</p>
+</section>
+
+<!-- ================= Sharing ================= -->
+<section class="dx-page" id="packs" data-group="Sharing">
+  <h1>Packs</h1>
+  <p class="dx-lead">Bundle guides, documents, notes, pins, routes and maps into one <code>.lspack</code> file to share by USB.</p>
+  <p>Every file in a pack has a SHA-256 hash, and a pack can be signed with an Ed25519 publisher key. Before installing, LASTSYNC checks every hash offline, and signed packs must match a publisher you trust. A changed or damaged pack is refused.</p>
+  <h2 id="packs-publish">Publishing</h2>
+  <p>Create a publisher key in <b>Packs</b> to sign the packs you export. Share your public key with the people who'll install them so they can add you as trusted.</p>
+</section>
+
+<section class="dx-page" id="install" data-group="Sharing">
+  <h1>Install and offline use</h1>
+  <p class="dx-lead">The app installs like a normal program from the browser and keeps working offline.</p>
+  <p>Choose <i>Install app</i> in the status bar, or your browser's install option. The app's files are cached by a service worker. <b>Save for offline use</b> also stores the guides, the encyclopedia and your plan in the browser, so Search and Ask keep working even if the computer running LASTSYNC can't be reached.</p>
+</section>
+
+<!-- ================= Reference ================= -->
+<section class="dx-page" id="configuration" data-group="Reference">
+  <h1>Configuration</h1>
+  <p class="dx-lead">Everything is optional. Set these as environment variables.</p>
+  <table class="dx-ref">
+    <thead><tr><th>Variable</th><th>Default</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>PORT</code></td><td><code>8787</code></td><td>Port to listen on</td></tr>
+      <tr><td><code>LASTSYNC_DATA</code></td><td><code>./data</code></td><td>Where data is stored</td></tr>
+      <tr><td><code>LASTSYNC_HOST</code></td><td></td><td>Address to listen on</td></tr>
+      <tr><td><code>LASTSYNC_BTC_API</code></td><td>mempool.space</td><td>Bitcoin broadcast and status API</td></tr>
+      <tr><td><code>LASTSYNC_SOLANA_RPC</code></td><td>Solana mainnet</td><td>Solana RPC endpoint</td></tr>
+      <tr><td><code>LASTSYNC_VECTOR_TILEJSON</code></td><td>OpenFreeMap</td><td>Any OpenMapTiles-compatible source</td></tr>
+      <tr><td><code>LASTSYNC_WIKI_API</code></td><td>Wikipedia</td><td>Where encyclopedia articles are downloaded from</td></tr>
+      <tr><td><code>LASTSYNC_DOWNLOAD_URL</code></td><td>GitHub releases</td><td>Link used by the download page</td></tr>
+    </tbody>
+  </table>
+  <h2 id="config-public">Online demo only</h2>
+  <table class="dx-ref">
+    <thead><tr><th>Variable</th><th>Default</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>LASTSYNC_TTL_DAYS</code></td><td><code>7</code></td><td>Days an unused workspace is kept</td></tr>
+      <tr><td><code>LASTSYNC_QUOTA_MB</code></td><td><code>200</code></td><td>Storage per visitor</td></tr>
+      <tr><td><code>LASTSYNC_MAX_WORKSPACES</code></td><td></td><td>Cap on workspaces</td></tr>
+      <tr><td><code>LASTSYNC_MAX_LIVE</code></td><td></td><td>Cap on workspaces held in memory</td></tr>
+      <tr><td><code>LASTSYNC_MAP_CACHE_MB</code></td><td><code>2048</code></td><td>Shared map tile cache</td></tr>
+      <tr><td><code>LASTSYNC_FRAME_ANCESTORS</code></td><td>Replit</td><td>Sites allowed to embed the demo</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="dx-page" id="api" data-group="Reference">
+  <h1>HTTP API</h1>
+  <p class="dx-lead">The app talks to its server over a small JSON API. You can use it for your own tools.</p>
+  <p>Requests from the computer itself have full access. Group members have the routes marked <b>member</b>. Write requests must send <code>content-type: application/json</code>.</p>
+  <table class="dx-ref">
+    <thead><tr><th>Route</th><th>Access</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET /api/status</code></td><td>owner</td><td>Version, data folder and network addresses</td></tr>
+      <tr><td><code>GET /api/search?q=</code></td><td>owner</td><td>Search everything</td></tr>
+      <tr><td><code>POST /api/ask</code></td><td>owner</td><td>Ask a question; returns the answer and citations</td></tr>
+      <tr><td><code>GET /api/public/search?q=</code></td><td>member</td><td>Search the bundled guides</td></tr>
+      <tr><td><code>GET /api/plan</code> · <code>PUT</code></td><td>owner</td><td>Read or save the household plan</td></tr>
+      <tr><td><code>GET /api/pins</code> · <code>POST</code></td><td>owner</td><td>Map pins</td></tr>
+      <tr><td><code>GET /api/routes</code> · <code>POST</code></td><td>owner</td><td>Routes; <code>POST /api/routes/gpx</code> imports GPX</td></tr>
+      <tr><td><code>GET /vt/:z/:x/:y</code></td><td>member</td><td>Vector map tiles, cached locally</td></tr>
+      <tr><td><code>POST /api/vt/save</code></td><td>owner</td><td>Save a map area for offline use</td></tr>
+      <tr><td><code>GET /api/readiness</code></td><td>owner</td><td>The readiness report</td></tr>
+      <tr><td><code>POST /api/relay/decode</code></td><td>owner</td><td>Decode and check a signed transaction</td></tr>
+      <tr><td><code>POST /api/relay</code></td><td>owner</td><td>Add a signed transaction to the queue</td></tr>
+      <tr><td><code>GET /api/group/relay</code></td><td>member</td><td>The group's relay queue</td></tr>
+      <tr><td><code>POST /api/group/start</code></td><td>owner</td><td>Start a group session</td></tr>
+      <tr><td><code>GET /api/source</code></td><td>open</td><td>Commit, file list and SHA-256 fingerprints</td></tr>
+    </tbody>
+  </table>
+  <p>The full list is in <a href="https://github.com/HuffyDev/sync/blob/main/server/index.js" target="_blank" rel="noopener"><code>server/index.js</code></a>.</p>
+  <pre><code>curl -s http://localhost:8787/api/relay/decode \
+  -H 'content-type: application/json' \
+  -d '{"tx":"0200000001..."}'</code></pre>
+</section>
+
+<section class="dx-page" id="security" data-group="Reference">
+  <h1>Access model</h1>
+  <p class="dx-lead">Who can see what.</p>
+  <ul>
+    <li><b>The computer running LASTSYNC</b> (<code>localhost</code>) gets the full app. The server checks the Host header, so other websites can't reach it through your browser, and write requests must be JSON.</li>
+    <li><b>Phones on the network</b> need the invite code, then hold a session cookie. They get the join page, the bundled guides, the encyclopedia, map tiles, the group and the relay.</li>
+    <li><b>The page</b> is served with a strict Content-Security-Policy: no inline scripts, and only the hosts listed for maps, models and broadcasting.</li>
+    <li><b>Packs</b> are checked file by file before install.</li>
+  </ul>
+</section>
+
+<section class="dx-page" id="open-source" data-group="Reference">
+  <h1>Open source</h1>
+  <p class="dx-lead">LASTSYNC is free and open source under the MIT license.</p>
+  <p>The code is at <a href="https://github.com/HuffyDev/sync" target="_blank" rel="noopener">github.com/HuffyDev/sync</a>. It has no npm dependencies. Third-party browser libraries are included as files in <code>web/vendor</code>, with their licenses in <code>NOTICES.txt</code>.</p>
+  <h2 id="os-verify">Checking a running copy</h2>
+  <p>Every running copy has an <b>Open source</b> page that shows the exact commit and a SHA-256 fingerprint for every file in <code>server</code>, <code>web</code> and <code>content</code>, plus one combined fingerprint. Compare it with a copy you build yourself:</p>
+  <pre><code>git clone https://github.com/HuffyDev/sync.git
+cd sync
+npm run hashes</code></pre>
+  <p>If the combined fingerprints match, the copy is running exactly that code. The same data is available at <code>GET /api/source</code>.</p>
+  <h2 id="os-contribute">Contributing</h2>
+  <p>Issues and pull requests are welcome. Run <code>npm test</code> before opening one.</p>
+</section>
+
+<!-- ================= Project ================= -->
+<section class="dx-page" id="token" data-group="Project">
+  <h1>Token</h1>
+  <p class="dx-lead">The community token for LASTSYNC, on Solana.</p>
+  <div class="ca-card">
+    <div class="ca-head"><span>Contract address</span><span class="ca-chain"><i></i>Solana</span></div>
+    <div class="ca-row">
+      <code class="ca-addr" data-ca>G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync</code>
+      <button class="btn small" type="button" data-copy-ca>Copy</button>
+    </div>
+    <div class="ca-links">
+      <a class="btn primary" href="https://pump.fun/coin/G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync" target="_blank" rel="noopener">Buy on Pump.fun</a>
+      <a class="btn" href="https://jup.ag/swap/SOL-G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync" target="_blank" rel="noopener">Buy on Jupiter</a>
+      <a class="btn" href="https://dexscreener.com/solana/G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync" target="_blank" rel="noopener">Chart</a>
+      <a class="btn ghost" href="https://solscan.io/token/G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync" target="_blank" rel="noopener">Solscan</a>
+    </div>
+  </div>
+  <p>This is the only official contract address. It is also posted on <a href="https://x.com/syncoffchain" target="_blank" rel="noopener">@syncoffchain</a>. The token is not needed to use LASTSYNC: the app is free and works the same for everyone.</p>
+  <p class="dx-small">Nothing here is financial advice.</p>
+</section>
+
+<section class="dx-page" id="community" data-group="Project">
+  <h1>Community</h1>
+  <div class="dx-cards">
+    <a class="dx-card" href="https://x.com/syncoffchain" target="_blank" rel="noopener"><b>X</b><span>@syncoffchain: announcements and updates.</span></a>
+    <a class="dx-card" href="https://github.com/HuffyDev/sync" target="_blank" rel="noopener"><b>GitHub</b><span>Code, releases, issues and pull requests.</span></a>
+    <a class="dx-card" href="https://github.com/HuffyDev/sync/issues" target="_blank" rel="noopener"><b>Report a problem</b><span>Open an issue with what you did and what happened.</span></a>
+    <a class="dx-card" href="/welcome"><b>Home page</b><span>The LASTSYNC front page.</span></a>
+  </div>
+</section>
+
+<section class="dx-page" id="faq" data-group="Project">
+  <h1>FAQ</h1>
+  <details open><summary>Does LASTSYNC need the internet?</summary><p>Only to set things up: saving map areas, downloading the encyclopedia or an AI model, and broadcasting transactions. Everything else works offline.</p></details>
+  <details><summary>Can LASTSYNC move my crypto?</summary><p>No. It can only carry and broadcast transactions your own wallet has already signed. It never asks for, stores or uses a private key, and it can't change a transaction.</p></details>
+  <details><summary>Why did my Solana transaction expire?</summary><p>It used a recent blockhash, which goes stale in about a minute. Sign it again with a durable nonce. See <a href="#relay-solana">Solana</a>.</p></details>
+  <details><summary>Do phones need an app?</summary><p>No. They join in the browser by scanning the QR code, on the same Wi-Fi as the computer.</p></details>
+  <details><summary>Does it run on Mac or Linux?</summary><p>Yes, from source with Node.js 20 or newer. The portable download is for Windows.</p></details>
+  <details><summary>How long does a laptop last in a blackout?</summary><p>LASTSYNC uses very little power on its own. Lower the screen brightness, close other programs, and charge from a power bank or car when you can. The status bar shows the battery level.</p></details>
+  <details><summary>Is it free?</summary><p>Yes. It's free and open source under the MIT license.</p></details>
+</section>
+
+      <nav class="dx-pager" id="dx-pager" aria-label="Previous and next"></nav>
+      <footer class="dx-foot">
+        <span>LASTSYNC · MIT license</span>
+        <a href="https://github.com/HuffyDev/sync/edit/main/web/docs.html" target="_blank" rel="noopener">Edit this page on GitHub</a>
+      </footer>
+    </main>
+
+    <aside class="dx-toc" id="dx-toc" aria-label="On this page"></aside>
+  </div>
+</body>
+</html>

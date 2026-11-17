@@ -264,3 +264,12 @@ resize();
 window.addEventListener('resize', () => { resize(); if (reduced) requestAnimationFrame(frame); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !reduced) requestAnimationFrame(frame); });
 buildDots().then(() => requestAnimationFrame(frame));
+
+// Copy the contract address.
+document.querySelectorAll('[data-copy-ca]').forEach((b) => b.addEventListener('click', async () => {
+  const el = b.closest('.ca-card').querySelector('[data-ca]');
+  try { await navigator.clipboard.writeText(el.textContent.trim()); }
+  catch { const r = document.createRange(); r.selectNodeContents(el); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); document.execCommand('copy'); }
+  b.textContent = 'Copied'; b.classList.add('done');
+  setTimeout(() => { b.textContent = 'Copy'; b.classList.remove('done'); }, 1600);
+}));

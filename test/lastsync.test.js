@@ -72,6 +72,10 @@ test('phones on the LAN cannot read private data', async (t) => {
   }
   assert.equal((await fetch(url + '/api/group/info')).status, 200);
   assert.equal((await fetch(url + '/join')).status, 200);
+  const docs = await fetch(url + '/docs');
+  assert.equal(docs.status, 200);
+  assert.match(await docs.text(), /G9WZ6x6Zqdw8B96tgWAmgagkMFdgqr23u6P3GX6oSync/);
+  assert.equal((await fetch(url + '/docs.js')).status, 200);
 });
 
 test('group: invite code, check-in, delivery receipt', async () => {
