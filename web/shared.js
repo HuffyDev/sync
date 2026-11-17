@@ -1,3 +1,4 @@
+import { tacticalBaseLayer, countryLabels, PAPER } from './basemap.js';
 // Helpers shared by the main app (this PC) and the join page (phones).
 
 export const $ = (sel, root = document) => root.querySelector(sel);
@@ -168,16 +169,16 @@ export function slugify(s) {
 }
 
 export const CATEGORIES = {
-  meeting: { label: 'Meeting point', color: '#59a8ff', letter: 'M' },
-  water: { label: 'Water source', color: '#1fb6d6', letter: 'W' },
-  shelter: { label: 'Shelter', color: '#8b6cf0', letter: 'S' },
-  medical: { label: 'Medical help', color: '#ff5a4f', letter: '+' },
-  food: { label: 'Food', color: '#3ecf7a', letter: 'F' },
-  power: { label: 'Power / charging', color: '#f5a524', letter: 'P' },
-  comms: { label: 'Communications', color: '#c58bff', letter: 'C' },
-  hazard: { label: 'Hazard', color: '#ff7a1a', letter: '!' },
-  home: { label: 'Home', color: '#9aa4b1', letter: 'H' },
-  other: { label: 'Other', color: '#6b7480', letter: '•' },
+  meeting: { label: 'Meeting point', color: '#4da3ff', letter: 'M' },
+  water: { label: 'Water source', color: '#22d3ee', letter: 'W' },
+  shelter: { label: 'Shelter', color: '#a78bfa', letter: 'S' },
+  medical: { label: 'Medical help', color: '#ff2e4d', letter: '+' },
+  food: { label: 'Food', color: '#2ef2a0', letter: 'F' },
+  power: { label: 'Power / charging', color: '#e8f15a', letter: 'P' },
+  comms: { label: 'Communications', color: '#c084fc', letter: 'C' },
+  hazard: { label: 'Hazard', color: '#ff5c7a', letter: '!' },
+  home: { label: 'Home', color: '#cbd5e1', letter: 'H' },
+  other: { label: 'Other', color: '#7dd3fc', letter: '•' },
 };
 
 export const MSG = {
@@ -199,50 +200,58 @@ export function receiptText(msg, members, me) {
 }
 
 // ---------- maps ----------
-let worldCache = null;
-async function world() {
-  if (!worldCache) {
-    worldCache = fetch('/vendor/countries-50m.json').then((r) => r.json()).then((topo) => window.topojson.feature(topo, topo.objects.countries));
-  }
-  return worldCache;
-}
-
-export async function createMap(el, { maps = [], center = [20, 0], zoom = 2, interactive = true } = {}) {
+export async function createMap(el, { maps = [], center = [20, 0], zoom = 2, interactive = true, labels = true, paper = false } = {}) {
   const L = window.L;
-  const map = L.map(el, { worldCopyJump: true, zoomControl: interactive, attributionControl: true, dragging: interactive, scrollWheelZoom: interactive, doubleClickZoom: interactive, boxZoom: interactive, keyboard: interactive, touchZoom: interactive, preferCanvas: true, zoomAnimation: false, fadeAnimation: false, markerZoomAnimation: false }).setView(center, zoom);
+  const map = L.map(el, {
+    worldCopyJump: true, zoomControl: false, attributionControl: true, dragging: interactive, scrollWheelZoom: interactive,
+    doubleClickZoom: interactive, boxZoom: interactive, keyboard: interactive, touchZoom: interactive, preferCanvas: true,
+    zoomSnap: 0.5, zoomDelta: 0.5, wheelPxPerZoomLevel: 90, minZoom: 1, maxBoundsViscosity: 1,
+    maxBounds: [[-88, -1e4], [88, 1e4]],
+  }).setView(center, zoom);
   map.attributionControl.setPrefix('');
-  const base = L.geoJSON(await world(), {
-    style: { color: '#4d6b7d', weight: 1, fillColor: '#1d3443', fillOpacity: 1 },
-    interactive: false,
-  }).addTo(map);
-  base.getAttribution = () => 'Natural Earth';
-  map.attributionControl.addAttribution('Natural Earth');
+  if (interactive) L.control.zoom({ position: 'bottomright' }).addTo(map);
+  tacticalBaseLayer(paper ? PAPER : undefined).addTo(map);
+  const labelLayer = labels && interactive ? countryLabels(map).addTo(map) : null;
   const layers = {};
   for (const m of maps) {
     layers[m.name] = L.tileLayer(`/tiles/${m.id}/{z}/{x}/{y}`, {
-      minZoom: 0, maxZoom: Math.max(19, m.maxzoom + 2), maxNativeZoom: m.maxzoom, minNativeZoom: m.minzoom,
+      minZoom: 0, maxZoom: 20, maxNativeZoom: m.maxzoom, minNativeZoom: m.minzoom,
       bounds: m.bounds ? [[m.bounds[1], m.bounds[0]], [m.bounds[3], m.bounds[2]]] : undefined,
-      attribution: m.attribution || '',
+      attribution: m.attribution || '', className: paper ? 'mbtiles' : 'mbtiles night', keepBuffer: 4,
     });
   }
   const names = Object.keys(layers);
-  if (names.length) {
-    layers[names[0]].addTo(map);
-    if (interactive && names.length > 1) L.control.layers(layers, {}, { collapsed: true }).addTo(map);
-  }
-  map.setMaxZoom(names.length ? 19 : 10);
-  return { map, layers };
+  if (names.length) layers[names[0]].addTo(map);
+  map.setMaxZoom(names.length ? 20 : 12);
+  // Removing a map mid-zoom makes Leaflet throw from a pending animation
+  // callback; neutralise those callbacks once the map is gone.
+  const remove = map.remove.bind(map);
+  map.remove = () => {
+    map._onZoomTransitionEnd = () => {};
+    map._catchTransitionEnd = () => {};
+    try { remove(); } catch {}
+    // A drag's momentum pan is scheduled for the next frame; make it a no-op.
+    map.panBy = () => map;
+    map.setView = () => map;
+    map.fitBounds = () => map;
+    return map;
+  };
+  return { map, layers, labels: labelLayer };
+}
+
+function markerHtml(color, glyph, extra = '') {
+  return `<div class="mk ${extra}" style="--c:${color}"><svg viewBox="0 0 32 40" aria-hidden="true"><path d="M16 1 L30 15 L16 39 L2 15 Z" class="mk-body"/></svg><b>${esc(glyph)}</b></div>`;
 }
 
 export function pinIcon(category) {
   const c = CATEGORIES[category] || CATEGORIES.other;
-  return window.L.divIcon({ className: '', html: `<div class="pin-icon" style="background:${c.color}"><b>${esc(c.letter)}</b></div>`, iconSize: [26, 26], iconAnchor: [13, 26], popupAnchor: [0, -24] });
+  return window.L.divIcon({ className: 'mk-wrap', html: markerHtml(c.color, c.letter, category === 'meeting' ? 'pulse' : ''), iconSize: [28, 35], iconAnchor: [14, 34], popupAnchor: [0, -30] });
 }
 
 export function msgIcon(type) {
-  const color = { safe: '#3ecf7a', help: '#ff5a4f', meet: '#59a8ff' }[type] || '#9aa4b1';
-  const letter = { safe: '✓', help: '!', meet: 'M' }[type] || '•';
-  return window.L.divIcon({ className: '', html: `<div class="pin-icon" style="background:${color}"><b>${letter}</b></div>`, iconSize: [26, 26], iconAnchor: [13, 26], popupAnchor: [0, -24] });
+  const color = { safe: '#2ef2a0', help: '#ff2e4d', meet: '#4da3ff' }[type] || '#8aa0ad';
+  const glyph = { safe: '✓', help: '!', meet: 'M' }[type] || '•';
+  return window.L.divIcon({ className: 'mk-wrap', html: markerHtml(color, glyph, type === 'help' ? 'pulse alert' : ''), iconSize: [28, 35], iconAnchor: [14, 34], popupAnchor: [0, -30] });
 }
 
 export function fmtCoord(lat, lon) {
@@ -315,6 +324,10 @@ const P = {
   route: '<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8 18h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/>',
   external: '<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
   x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  ruler: '<path d="m3 17 14-14 4 4L7 21z"/><path d="m7 13 2 2M10 10l2 2M13 7l2 2"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
+  expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  fullscreen: '<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/><rect x="8" y="8" width="8" height="8" rx="1"/>',
 };
 export function icon(name) {
   return raw(`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name] || ''}</svg>`);

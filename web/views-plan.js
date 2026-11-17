@@ -178,7 +178,7 @@ export async function printView(el) {
   });
   let map = null;
   if (located.length) {
-    ({ map } = await createMap($('#sheet-map'), { maps, interactive: false }));
+    ({ map } = await createMap($('#sheet-map'), { maps, interactive: false, paper: true }));
     located.forEach((m, i) => window.L.marker([m.lat, m.lon], { icon: pinIcon('meeting') }).addTo(map).bindTooltip(String(i + 1), { permanent: true, direction: 'right' }));
     if (located.length === 1) map.setView([located[0].lat, located[0].lon], 15);
     else map.fitBounds(located.map((m) => [m.lat, m.lon]), { padding: [30, 30], maxZoom: 16 });

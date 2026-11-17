@@ -6,21 +6,26 @@ import { groupView, logView } from './views-group.js';
 import { packsView } from './views-packs.js';
 
 const NAV = [
-  ['#/', 'home', 'Home'],
+  'Operations',
+  ['#/', 'home', 'Command'],
   ['#/search', 'search', 'Search'],
   ['#/ask', 'ask', 'Ask'],
   ['#/map', 'map', 'Maps'],
   ['#/plan', 'plan', 'My plan'],
-  null,
+  'Intel',
   ['#/library', 'book', 'Library'],
   ['#/notes', 'note', 'Notes'],
+  'Comms',
   ['#/group', 'group', 'Group'],
   ['#/log', 'log', 'Outage log'],
-  null,
+  'System',
   ['#/packs', 'pack', 'Packs'],
   ['#/ready', 'ready', 'Readiness'],
   ['#/settings', 'settings', 'Settings'],
 ];
+
+// Codes shown above each page title.
+const CODES = { '': 'OPS-00 // Command', search: 'OPS-01 // Search', ask: 'OPS-02 // Ask', map: 'OPS-03 // Maps', plan: 'OPS-04 // Plan', print: 'OPS-04 // Printout', library: 'INT-01 // Library', guide: 'INT-01 // Guide', doc: 'INT-01 // Document', notes: 'INT-02 // Notes', note: 'INT-02 // Note', group: 'COM-01 // Group', log: 'COM-02 // Log', packs: 'SYS-01 // Packs', ready: 'SYS-02 // Readiness', settings: 'SYS-03 // Settings', download: 'SYS-04 // Deploy' };
 
 const ROUTES = {
   '': dashboard,
@@ -39,13 +44,20 @@ const ROUTES = {
   packs: packsView,
   ready: readyView,
   settings: settingsView,
+  download: downloadView,
 };
 
 let cleanup = null;
-export const state = { group: null };
+export const state = { group: null, public: false, downloadUrl: '', readiness: null, online: navigator.onLine, battery: null };
 
 function renderNav(active) {
-  mount($('#nav'), html`${NAV.map((n) => (n ? html`<a href="${n[0]}" class="${active === n[0] ? 'on' : ''}">${icon(n[1])}<span>${n[2]}</span>${n[0] === '#/group' && state.group ? html`<span class="badge ${state.group.help ? 'bad' : 'ok'}">${state.group.help ? 'HELP' : 'live'}</span>` : ''}</a>` : html`<div class="nav-sep"></div>`))}`);
+  const items = NAV.map((n) => {
+    if (typeof n === 'string') return html`<div class="nav-group">${n}</div>`;
+    const badge = n[0] === '#/group' && state.group ? html`<span class="badge ${state.group.help ? 'bad' : 'ok'}">${state.group.help ? 'HELP' : 'live'}</span>` : '';
+    return html`<a href="${n[0]}" class="${active === n[0] ? 'on' : ''}">${icon(n[1])}<span>${n[2]}</span>${badge}</a>`;
+  });
+  const getApp = state.public ? html`<a href="#/download" class="get-app ${active === '#/download' ? 'on' : ''}">${icon('download')}<span>Get the app</span></a>` : '';
+  mount($('#nav'), html`${items}${getApp}`);
 }
 
 export function parseHash() {
@@ -64,6 +76,8 @@ async function route() {
   el.innerHTML = '';
   try {
     cleanup = (await view(el, args, query)) || null;
+    const h1 = el.querySelector('.page-head h1');
+    if (h1 && CODES[name] && !h1.previousElementSibling?.classList.contains('kicker')) h1.insertAdjacentHTML('beforebegin', `<p class="kicker">${esc(CODES[name])}</p>`);
   } catch (err) {
     console.error(err);
     mount(el, html`<div class="notice bad"><strong>Something went wrong.</strong> ${err.message}</div>`);
@@ -111,35 +125,43 @@ export const topicLabel = (t) => TOPIC_LABEL[t] || (t ? t[0].toUpperCase() + t.s
 async function dashboard(el) {
   const d = await api('/api/dashboard');
   const r = d.readiness;
-  const ringColor = r.score >= 80 ? 'var(--safe)' : r.score >= 50 ? 'var(--accent)' : 'var(--help)';
+  const ringColor = r.score >= 80 ? 'var(--safe)' : r.score >= 50 ? 'var(--warn)' : 'var(--help)';
   const byTopic = {};
   for (const g of d.guides) (byTopic[g.topic] ||= []).push(g);
+  const gm = d.group ? d.group.members : 0;
   mount(el, html`
-    <div class="page-head"><div><h1>Survival dashboard</h1><p>Everything here works without the internet.</p></div></div>
+    <div class="page-head"><div><h1>Command center</h1><p>Every system below runs on this machine. No uplink required.</p></div>
+      <div class="row"><a class="btn" href="#/print">${icon('print')}Printout</a><a class="btn primary" href="#/group">${icon('group')}${d.group ? 'Group live' : 'Start group'}</a></div></div>
     ${d.group?.help?.length ? html`<div class="notice bad" style="margin-bottom:16px"><strong>${d.group.help.at(-1).fromName} asked for help</strong> ${ago(d.group.help.at(-1).ts)}. <a href="#/group">Open the group</a></div>` : ''}
-    <form class="hero-search" id="dash-search" role="search">
+    <div class="stat-row">
+      <div class="stat"><div class="label">Readiness</div><div class="v ${r.score >= 80 ? 'ok' : r.score >= 50 ? 'warn' : 'bad'}">${r.score}%</div></div>
+      <div class="stat"><div class="label">Guides on disk</div><div class="v">${d.guides.length}</div></div>
+      <div class="stat"><div class="label">Meeting points</div><div class="v ${d.meetingPoints.length ? '' : 'bad'}">${d.meetingPoints.length}</div></div>
+      <div class="stat"><div class="label">Group</div><div class="v ${d.group ? 'ok' : ''}">${d.group ? gm + ' live' : 'offline'}</div></div>
+    </div>
+    <form class="cmd" id="dash-search" role="search">
       ${icon('search')}
-      <input type="search" name="q" placeholder="Search guides, files, notes and map pins — e.g. “cleaning water”" aria-label="Search" autofocus>
+      <input type="search" name="q" placeholder="Query the library — e.g. cleaning water, generator, bleeding" aria-label="Search" autofocus>
     </form>
     <div class="big-tiles">
-      <a class="tile" href="#/search">${icon('search')}<strong>Search</strong><span>Every guide, PDF, note and pin on this PC</span></a>
-      <a class="tile" href="#/ask">${icon('ask')}<strong>Ask</strong><span>Answers from your library, with sources</span></a>
-      <a class="tile" href="#/map">${icon('map')}<strong>Maps</strong><span>Offline maps, pins, routes and GPS</span></a>
-      <a class="tile" href="#/plan">${icon('plan')}<strong>My plan</strong><span>Contacts, meeting points, checklist</span></a>
+      <a class="tile" href="#/search"><span class="num">01</span>${icon('search')}<strong>Search</strong><span>Every guide, PDF, note and pin on this machine</span></a>
+      <a class="tile" href="#/ask"><span class="num">02</span>${icon('ask')}<strong>Ask</strong><span>Answers from your library, with sources</span></a>
+      <a class="tile" href="#/map"><span class="num">03</span>${icon('map')}<strong>Maps</strong><span>Tactical map, pins, routes, range rings, GPS</span></a>
+      <a class="tile" href="#/plan"><span class="num">04</span>${icon('plan')}<strong>My plan</strong><span>Contacts, rally points, grab list</span></a>
     </div>
     <div class="grid grid-2">
       <section class="card">
-        <div class="card-title"><h2>Quick help</h2><a class="btn small ghost" href="#/library">All guides</a></div>
+        <div class="card-title"><h2>Field guides</h2><a class="btn small ghost" href="#/library">All</a></div>
         <div class="chips">
           ${Object.entries(byTopic).map(([t, gs]) => gs.map((g) => html`<a class="chip" href="#/guide/${g.id}">${topicLabel(t)}</a>`))}
         </div>
-        ${d.meetingPoints.length ? html`<hr><h3>Meeting points</h3><ul class="list">${d.meetingPoints.slice(0, 3).map((m) => html`<li class="row between"><span><strong>${m.name}</strong><br><small>${m.address || m.when || ''}</small></span>${m.lat != null ? html`<a class="btn small" href="#/map?lat=${m.lat}&lon=${m.lon}">${icon('map')}Show</a>` : ''}</li>`)}</ul>` : ''}
+        ${d.meetingPoints.length ? html`<hr><h3>Rally points</h3><ul class="list">${d.meetingPoints.slice(0, 3).map((m) => html`<li class="row between"><span><strong>${m.name}</strong><br><small>${m.address || m.when || ''}</small></span>${m.lat != null ? html`<a class="btn small" href="#/map?lat=${m.lat}&lon=${m.lon}">${icon('map')}Show</a>` : ''}</li>`)}</ul>` : ''}
       </section>
       <section class="card">
-        <div class="card-title"><h2>Ready for an outage?</h2><a class="btn small ghost" href="#/ready">Details</a></div>
+        <div class="card-title"><h2>Readiness</h2><a class="btn small ghost" href="#/ready">Details</a></div>
         <div class="score">
           <div class="ring" style="--p:${r.score};--ring-color:${ringColor}" data-label="${r.score}%"></div>
-          <div>${r.todo.length ? html`<strong>${r.todo.length} thing${r.todo.length > 1 ? 's' : ''} to do while you still can</strong>` : html`<strong>You're ready.</strong>`}<br><small>Checks your guides, maps, plan and printouts.</small></div>
+          <div>${r.todo.length ? html`<strong>${r.todo.length} gap${r.todo.length > 1 ? 's' : ''} to close while you still can</strong>` : html`<strong>All essentials secured.</strong>`}<br><small>Guides, maps, plan and paper backup.</small></div>
         </div>
         ${r.todo.length ? html`<ul class="list" style="margin-top:10px">${r.todo.slice(0, 4).map((t) => html`<li><a href="${t.href}" class="item-link"><strong>${t.label}</strong><br><small>${t.detail}</small></a></li>`)}</ul>` : ''}
       </section>
@@ -150,10 +172,10 @@ async function dashboard(el) {
           : html`<div class="empty">Pin guides and files with the ☆ button so you can reach them fast.</div>`}
       </section>
       <section class="card">
-        <div class="card-title"><h2>Group</h2><a class="btn small ghost" href="#/group">Open</a></div>
+        <div class="card-title"><h2>Comms</h2><a class="btn small ghost" href="#/group">Open</a></div>
         ${d.group
-          ? html`<p><span class="badge ok">Live</span> <strong>${d.group.name}</strong> · ${d.group.members} people connected</p><a class="btn" href="#/group">${icon('group')}Status board</a>`
-          : html`<p class="muted">Host a group on local Wi-Fi so your household can check in from their phones — no internet or cell service needed.</p><a class="btn" href="#/group">${icon('group')}Start a group</a>`}
+          ? html`<p><span class="badge ok">Live</span> <strong>${d.group.name}</strong> · ${d.group.members} connected</p><a class="btn" href="#/group">${icon('group')}Status board</a>`
+          : html`<p class="muted">Host a group so your household can check in from their phones — no internet or cell service needed.</p><a class="btn" href="#/group">${icon('group')}Start a group</a>`}
       </section>
     </div>
   `);
@@ -339,7 +361,7 @@ async function readyView(el) {
   const r = await api('/api/readiness');
   const groups = {};
   for (const c of r.checks) (groups[c.group] ||= []).push(c);
-  const ringColor = r.score >= 80 ? 'var(--safe)' : r.score >= 50 ? 'var(--accent)' : 'var(--help)';
+  const ringColor = r.score >= 80 ? 'var(--safe)' : r.score >= 50 ? 'var(--warn)' : 'var(--help)';
   mount(el, html`
     <div class="page-head"><div><h1>Offline readiness</h1><p>What's actually saved on this PC. Fix the gaps before an outage.</p></div></div>
     <div class="card score" style="margin-bottom:16px"><div class="ring" style="--p:${r.score};--ring-color:${ringColor}" data-label="${r.score}%"></div>
@@ -450,7 +472,7 @@ export async function watchGroup() {
       if (m.type === 'help') { state.group.help = m; beep('help'); }
       else beep();
       if (parseHash().name !== 'group') toast(`${m.fromName}: ${m.type === 'text' ? m.text : { safe: "I'm safe", help: 'I need help', meet: 'Meet here', ping: 'Are you OK?' }[m.type]}`);
-      renderAlerts(); renderNav(currentNav());
+      renderAlerts(); renderNav(currentNav()); renderHud();
     },
     ended: () => { state.group = null; renderAlerts(); renderNav(currentNav()); },
   });
@@ -472,10 +494,101 @@ route();
 watchGroup();
 api('/api/status').then((s) => {
   state.public = s.mode === 'public';
-  if (!state.public) return;
-  mount($('#demo'), html`<div class="demo-bar">You're using the <strong>online demo</strong>. What you add is kept on this server for 7 days and only this browser can see it. The real LASTSYNC runs offline on your PC, with no internet needed. <a class="btn small primary" href="${s.downloadUrl}" target="_blank" rel="noopener">${icon('download')}Download for Windows</a></div>`);
+  state.downloadUrl = s.downloadUrl;
+  renderNav(currentNav());
+  if (state.public) mount($('#side-foot'), html`<span class="offline-dot"></span>DEMO UPLINK<br>DATA KEPT 7 DAYS IN THIS BROWSER`);
+  renderHud();
 }).catch(() => {});
+startHud();
 document.addEventListener('click', (e) => { if (e.target.closest('[data-print]')) window.print(); });
+
+// ---------- HUD (status bar) ----------
+function pad(n) { return String(n).padStart(2, '0'); }
+function renderHud() {
+  const now = new Date();
+  const lcl = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const utc = `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}Z`;
+  const date = now.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+  const b = state.battery;
+  let pwr = html`<span class="hud-item"><span class="led"></span><span class="k">PWR</span><b>—</b></span>`;
+  if (b) {
+    const pct = Math.round(b.level * 100);
+    const cls = b.charging ? 'ok' : pct <= 15 ? 'bad' : pct <= 35 ? 'warn' : 'ok';
+    pwr = html`<span class="hud-item ${cls}" title="Battery of this device"><span class="led"></span><span class="k">PWR</span><b>${b.charging ? 'AC ' : 'BATT '}${pct}%</b>${!b.charging && b.dischargingTime && Number.isFinite(b.dischargingTime) ? html`<span class="k">~${Math.round(b.dischargingTime / 60)} MIN</span>` : ''}</span>`;
+  }
+  const r = state.readiness;
+  const g = state.group;
+  mount($('#hud'), html`
+    <span class="hud-item"><span class="k">LCL</span><b>${lcl}</b></span>
+    <span class="hud-item"><span class="k">UTC</span><b>${utc}</b></span>
+    <span class="hud-item"><span class="k">${date}</span></span>
+    <span class="hud-item ${state.online ? 'ok' : 'bad'}" title="Internet connection"><span class="led"></span><span class="k">UPLINK</span><b>${state.online ? 'UP' : 'DOWN'}</b></span>
+    ${pwr}
+    <span class="hud-spacer"></span>
+    ${g?.help ? html`<a class="hud-item alert" href="#/group"><span class="k">SOS</span><b>${g.help.fromName}</b></a>` : g ? html`<a class="hud-item ok" href="#/group"><span class="led"></span><span class="k">GROUP</span><b>LIVE</b></a>` : ''}
+    ${r != null ? html`<a class="hud-item ${r >= 80 ? 'ok' : r >= 50 ? 'warn' : 'bad'}" href="#/ready"><span class="led"></span><span class="k">READY</span><b>${r}%</b></a>` : ''}
+    <span class="hud-item"><span class="k">MODE</span><b>${state.public ? 'DEMO' : 'LOCAL'}</b></span>`);
+}
+function startHud() {
+  renderHud();
+  setInterval(renderHud, 1000);
+  window.addEventListener('online', () => { state.online = true; renderHud(); });
+  window.addEventListener('offline', () => { state.online = false; renderHud(); });
+  navigator.getBattery?.().then((b) => {
+    const upd = () => { state.battery = { level: b.level, charging: b.charging, dischargingTime: b.dischargingTime }; renderHud(); };
+    upd();
+    ['levelchange', 'chargingchange', 'dischargingtimechange'].forEach((e) => b.addEventListener(e, upd));
+  }).catch(() => {});
+  const ready = () => api('/api/readiness').then((x) => { state.readiness = x.score; }).catch(() => {});
+  ready();
+  setInterval(ready, 120000);
+  window.addEventListener('hashchange', ready);
+}
+
+// ---------- get the app ----------
+async function downloadView(el) {
+  const s = await api('/api/status');
+  const url = s.downloadUrl;
+  mount(el, html`
+    <div class="dl-hero">
+      <div class="globe" aria-hidden="true"></div>
+      <p class="kicker">SYS-04 // Deploy offline</p>
+      <h1>When the grid goes dark, this keeps working.</h1>
+      <p>This website is a demo. The real LASTSYNC runs entirely on your own Windows PC or a USB stick — guides, search, Ask, maps, your plan and the group check-in all keep working with no internet and no cell service.</p>
+      <div class="row" style="margin-top:18px"><a class="btn primary" href="${url}" target="_blank" rel="noopener">${icon('download')}Download for Windows</a><span class="muted mono" style="font-size:.75rem;letter-spacing:.1em">FREE · NO ACCOUNT · ~40 MB ZIP</span></div>
+    </div>
+    <div class="grid grid-3" style="margin-top:14px">
+      <section class="card"><h2>Install in 60 seconds</h2>
+        <ol class="steps">
+          <li><span>Download the ZIP and unzip it — onto your PC or a USB drive.</span></li>
+          <li><span>Open <strong>LASTSYNC.exe</strong>. Your browser opens the app at <span class="mono">localhost:8787</span>.</span></li>
+          <li><span>Do the setup while you still have internet: fill in your plan, print the sheet, add a regional map.</span></li>
+          <li><span>Unplug and test it. Then put the USB in your go-bag.</span></li>
+        </ol>
+      </section>
+      <section class="card"><h2>Works with zero signal</h2>
+        <ul class="feature-list">
+          <li>Field guides for water, power, food, first aid, warmth, sanitation and comms</li>
+          <li>Search and Ask across your guides, PDFs and notes</li>
+          <li>Tactical offline maps, pins, routes, range rings and USB GPS</li>
+          <li>Group check-ins over local Wi-Fi — phones join by QR code</li>
+          <li>Household plan with a printable one-page backup</li>
+          <li>Signed packs to share maps and guides by USB</li>
+        </ul>
+      </section>
+      <section class="card"><h2>Specs</h2>
+        <dl class="spec">
+          <dt>System</dt><dd>Windows 10 or 11, 64-bit</dd>
+          <dt>Runs from</dt><dd>PC or USB drive (data travels with it)</dd>
+          <dt>Account</dt><dd>None. Nothing is sent anywhere.</dd>
+          <dt>Phones</dt><dd>Any phone browser on the same Wi-Fi</dd>
+          <dt>AI</dt><dd>Built-in answers, or plug in a local model (Ollama, LM Studio)</dd>
+          <dt>Source</dt><dd>Open on GitHub</dd>
+        </dl>
+      </section>
+    </div>
+    <section class="card" style="margin-top:14px"><h2>First launch</h2><p class="muted" style="margin:0">Windows SmartScreen may say the app is unrecognized because it isn't code-signed yet — choose <strong>More info → Run anyway</strong>. If Windows asks whether LASTSYNC may use private networks, choose <strong>Allow</strong> so phones can join your group.</p></section>`);
+}
 
 // Re-render the current page through the router (so the old page is cleaned
 // up), but only if the person is still on the page that asked for it.

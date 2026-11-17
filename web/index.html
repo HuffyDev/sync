@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LASTSYNC</title>
   <meta name="description" content="Offline survival system for blackouts and prolonged outages.">
-  <meta name="theme-color" content="#0d0f12">
+  <meta name="theme-color" content="#020406">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="/styles.css">
@@ -16,18 +16,20 @@
 </head>
 <body>
   <noscript>LASTSYNC needs JavaScript turned on in your browser.</noscript>
-  <div id="demo"></div>
   <div id="alerts"></div>
   <div class="shell">
     <nav class="side" aria-label="Main">
       <a class="brand" href="#/">
         <img class="brand-mark" src="/icon.svg" alt="">
-        <span><span class="brand-name">LASTSYNC</span><span class="brand-sub">Offline survival kit</span></span>
+        <span><span class="brand-name">LASTSYNC</span><span class="brand-sub">Survival ops system</span></span>
       </a>
       <div class="nav" id="nav"></div>
-      <div class="side-foot"><span class="offline-dot"></span>Runs on this PC — no internet needed</div>
+      <div class="side-foot" id="side-foot"><span class="offline-dot"></span>SYSTEMS NOMINAL<br>RUNS LOCALLY — NO UPLINK REQUIRED</div>
     </nav>
-    <main id="view" tabindex="-1"></main>
+    <div class="main-col">
+      <header class="hud" id="hud" aria-label="Status"></header>
+      <main id="view" tabindex="-1"></main>
+    </div>
   </div>
 </body>
 </html>
