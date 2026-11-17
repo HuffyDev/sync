@@ -1,5 +1,5 @@
 modules = ["nodejs-22"]
-# Run pulls the latest code from GitHub first, so Stop + Run updates the app.
+# Stop + Run pulls the latest code from GitHub, then restarts the app.
 run = "timeout 20 git pull --ff-only origin main || echo 'git pull skipped'; npm run start:public"
 
 [deployment]
@@ -10,3 +10,15 @@ run = ["npm", "run", "start:public"]
 [[ports]]
 localPort = 8787
 externalPort = 80
+
+[workflows]
+runButton = "start"
+
+[[workflows.workflow]]
+name = "start"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "timeout 20 git pull --ff-only origin main || echo 'git pull skipped'; npm run start:public"
+waitForPort = 8787
