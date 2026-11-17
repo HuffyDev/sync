@@ -185,7 +185,16 @@ function board() {
 
 // ---------- guides & ask ----------
 let guideCache = null;
+const refAttr = (ref) => (ref.wiki ? html`data-w="${ref.wiki}" data-sec="${ref.section ?? ''}"` : html`data-g="${ref.guide}" data-sec="${ref.section || ''}"`);
 async function guides(state = {}) {
+  if (state.wiki) {
+    const a = await api('/api/public/wiki/article/' + encodeURIComponent(state.wiki));
+    mount(app, html`<button class="btn small ghost" id="back">← Guides</button><h1 style="font-size:1.35rem;margin-top:10px">${a.title}</h1><small class="muted">Wikipedia · saved ${String(a.savedAt).slice(0, 10)} · CC BY-SA 4.0</small>
+      <article class="prose" style="margin-top:12px">${a.image ? html`<figure class="wiki-hero"><img src="/files/wiki/${a.image}" alt=""><figcaption>${a.imageCredit ? `Image: ${a.imageCredit.artist} · ${a.imageCredit.license}` : 'Image: Wikimedia Commons'}</figcaption></figure>` : ''}${a.sections.map((x, i) => html`<section id="s-${i}">${i ? html`<h2>${x.heading}</h2>` : ''}${markdown(x.text)}</section>`)}</article>`);
+    $('#back').addEventListener('click', () => guides());
+    if (state.section) document.getElementById('s-' + state.section)?.scrollIntoView(); else window.scrollTo(0, 0);
+    return;
+  }
   if (state.guide) {
     const g = await api('/api/public/guides/' + encodeURIComponent(state.guide));
     mount(app, html`<button class="btn small ghost" id="back">← Guides</button><h1 style="font-size:1.35rem;margin-top:10px">${g.title}</h1><small class="muted">${g.publisher} · ${g.date} · v${g.version}</small>
@@ -203,21 +212,25 @@ async function guides(state = {}) {
   const res = $('#gres');
   $('#gq').addEventListener('submit', (e) => { e.preventDefault(); guides({ q: e.target.q.value.trim(), ask: $('#askmode').checked }); });
   if (!state.q) {
-    mount(res, html`<div class="card">${guideCache.map((g) => html`<a href="#" class="item-link" data-g="${g.id}" style="padding:10px 0;border-top:1px solid var(--line)"><strong>${g.title}</strong><br><small class="muted">${g.summary}</small></a>`)}</div>`);
+    const w = await api('/api/public/wiki').catch(() => null);
+    const saved = (w?.catalog || []).flatMap((c) => c.titles.filter((t) => t.saved));
+    mount(res, html`<div class="card">${guideCache.map((g) => html`<a href="#" class="item-link" data-g="${g.id}" style="padding:10px 0;border-top:1px solid var(--line)"><strong>${g.title}</strong><br><small class="muted">${g.summary}</small></a>`)}</div>
+      ${saved.length ? html`<h2 style="margin:18px 0 10px">Encyclopedia · ${saved.length}</h2><div class="wiki-grid">${saved.map((t) => html`<a class="wiki-card" href="#" data-w="${t.id}">${t.image ? html`<img src="/files/wiki/${t.image}" alt="" loading="lazy">` : html`<div class="wiki-noimg">${icon('book')}</div>`}<div><strong>${t.title}</strong><small>${t.summary.slice(0, 90)}…</small></div></a>`)}</div>` : ''}`);
   } else if (state.ask) {
     mount(res, html`<p class="muted">Looking it up…</p>`);
     try {
       const a = await api('/api/public/ask', { method: 'POST', body: { question: state.q } });
       const cite = (n) => `<a class="cite" href="#" data-src="${n}">${n}</a>`;
       mount(res, html`<div class="card a-card">${a.urgent ? html`<div class="urgent">${a.urgent}</div>` : ''}<div class="prose">${markdown(a.answer, { cite })}</div>
-        <div class="sources">${a.sources.map((s) => html`<a class="source ${s.used ? '' : 'unused'}" href="#" data-g="${s.ref.guide}" data-sec="${s.ref.section || ''}"><span class="n">${s.n}</span><span><strong>${s.title}</strong> › ${s.subtitle}<p>${highlight(s.excerpt, s.highlights)}</p></span></a>`)}</div></div>`);
-      $$('[data-src]', res).forEach((c) => c.addEventListener('click', (e) => { e.preventDefault(); const s = a.sources[Number(c.dataset.src) - 1]; guides({ guide: s.ref.guide, section: s.ref.section }); }));
+        <div class="sources">${a.sources.map((s) => html`<a class="source ${s.used ? '' : 'unused'}" href="#" ${refAttr(s.ref)}><span class="n">${s.n}</span><span><strong>${s.title}</strong> › ${s.subtitle}<p>${highlight(s.excerpt, s.highlights)}</p></span></a>`)}</div></div>`);
+      $$('[data-src]', res).forEach((c) => c.addEventListener('click', (e) => { e.preventDefault(); const s = a.sources[Number(c.dataset.src) - 1]; guides(s.ref.wiki ? { wiki: s.ref.wiki, section: s.ref.section } : { guide: s.ref.guide, section: s.ref.section }); }));
     } catch (err) { mount(res, html`<div class="notice bad">${err.message}</div>`); }
   } else {
     const r = await api('/api/public/search?q=' + encodeURIComponent(state.q));
-    mount(res, r.results.length ? html`${r.results.map((x) => html`<a class="result" href="#" data-g="${x.ref.guide}" data-sec="${x.ref.section || ''}"><div class="result-head"><span class="result-title">${x.title}</span><span class="result-sub">› ${x.subtitle}</span></div><p>${highlight(x.excerpt, x.highlights)}</p></a>`)}` : html`<div class="empty">Nothing found. Try other words.</div>`);
+    mount(res, r.results.length ? html`${r.results.map((x) => html`<a class="result" href="#" ${refAttr(x.ref)}><div class="result-head"><span class="result-title">${x.title}</span><span class="result-sub">› ${x.subtitle}</span></div><p>${highlight(x.excerpt, x.highlights)}</p></a>`)}` : html`<div class="empty">Nothing found. Try other words.</div>`);
   }
   $$('[data-g]', res).forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); guides({ guide: a.dataset.g, section: a.dataset.sec }); }));
+  $$('[data-w]', res).forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); guides({ wiki: a.dataset.w, section: a.dataset.sec }); }));
 }
 
 // ---------- log ----------

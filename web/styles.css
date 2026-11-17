@@ -526,3 +526,39 @@ body:has(.phone-tabs:not([hidden])) .toast-wrap { bottom: calc(86px + env(safe-a
 
 .ov-measure > span { white-space: nowrap; }
 @media (max-width: 1100px) { .ov-measure { left: 12px; bottom: 132px; max-width: calc(100% - 80px); } }
+
+/* ---------- encyclopedia ---------- */
+.wiki-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.wiki-card { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: start; padding: 10px; border: 1px solid var(--line); border-radius: 3px; background: rgba(2, 6, 9, 0.6); text-decoration: none; }
+.wiki-card:hover { border-color: var(--accent); box-shadow: 0 0 16px rgba(69, 212, 255, 0.1); color: inherit; }
+.wiki-card img, .wiki-noimg { width: 64px; height: 64px; object-fit: cover; border-radius: 2px; border: 1px solid var(--line-2); filter: saturate(0.85) contrast(1.05); }
+.wiki-noimg { display: grid; place-items: center; color: var(--faint); background: var(--panel-2); }
+.wiki-noimg svg { width: 22px; height: 22px; }
+.wiki-card strong { display: block; color: #fff; font-size: 0.92rem; line-height: 1.25; }
+.wiki-card small { display: block; color: var(--muted); font-size: 0.78rem; line-height: 1.35; margin-top: 4px; }
+.wiki-card.missing { opacity: 0.5; }
+.wiki-hero { margin: 0 0 18px; }
+.wiki-hero img { width: 100%; max-height: 360px; object-fit: cover; border: 1px solid var(--line-2); border-radius: 3px; }
+.wiki-hero figcaption { font-family: var(--mono); font-size: 0.66rem; color: var(--faint); margin-top: 6px; letter-spacing: 0.04em; }
+.stat .of { font-size: 0.8rem; color: var(--faint); }
+a.stat { text-decoration: none; }
+a.stat:hover { background: var(--panel-2); color: inherit; }
+.stat-row { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+
+/* ---------- gear ---------- */
+.kit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.kit-item { display: flex; flex-direction: column; margin: 0 !important; }
+.kit-item.owned { border-color: rgba(46, 242, 160, 0.45); }
+.kit-item.owned .kit-name::after { content: " ✓"; color: var(--safe); }
+.kit-name { font-family: var(--font); font-size: 1.08rem; text-transform: none; letter-spacing: 0; color: #fff; margin: 10px 0 4px; }
+.kit-item .feature-list { font-size: 0.86rem; gap: 4px; color: var(--text); }
+.kit-meter { display: flex; align-items: center; gap: 14px; }
+.kit-meter .ring { width: 70px; height: 70px; }
+.kit-meter .ring::before { width: 58px; height: 58px; font-size: 0.95rem; }
+
+/* ---------- on-device AI ---------- */
+.tier { display: flex; flex-direction: column; margin: 0 !important; min-height: 280px; }
+.tier.chosen { border-color: var(--accent); box-shadow: 0 0 28px rgba(69, 212, 255, 0.15); }
+.tier-name { font-family: var(--mono); font-size: 1.6rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #fff; margin-top: 14px; }
+.tier-size { font-family: var(--mono); font-size: 1.05rem; font-weight: 700; color: var(--accent); text-shadow: 0 0 12px rgba(69, 212, 255, 0.5); }
+.big-tiles { grid-template-columns: repeat(4, 1fr); }

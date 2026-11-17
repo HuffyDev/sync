@@ -16,7 +16,9 @@ import { pipeline } from 'node:stream/promises';
 import { Store, newId, nowIso } from './store.js';
 import { loadGuides, plainText, slug } from './guides.js';
 import { SearchIndex } from './search.js';
-import { ask } from './ask.js';
+import { ask, retrieve, URGENT_NOTE } from './ask.js';
+import { Wiki } from './wiki.js';
+import { KIT, KIT_CATEGORIES, kitSummary } from './kit.js';
 import { Group, httpError } from './group.js';
 import * as packs from './packs.js';
 import { MapStore } from './maps.js';
@@ -56,6 +58,8 @@ export function createApp(opts = {}) {
   const store = new Store(DATA_DIR);
   const group = new Group(store);
   const maps = new MapStore(store, dirs.maps);
+  // The encyclopedia is the same for everyone, so the online demo shares one copy.
+  const wiki = opts.wiki || new Wiki(opts.wikiDir || path.join(DATA_DIR, 'wiki'));
 
   const defaults = {
     settings: { hostName: '', ai: { provider: 'builtin', baseUrl: 'http://localhost:11434/v1', model: 'llama3.2', apiKey: '', timeoutSec: 90 }, pinned: [], printedAt: null, planUpdatedAt: null },
@@ -113,10 +117,20 @@ export function createApp(opts = {}) {
     for (const c of plan.contacts) {
       units.push({ id: `plan:c:${c.id}`, kind: 'plan', title: c.name, subtitle: 'Contact', text: `${c.name} ${c.relation || ''} ${c.phone || ''} ${c.note || ''}`, topic: 'plan', pack: 'My plan', fileType: 'plan', ref: { plan: 'contacts' } });
     }
+    for (const meta of Object.values(wiki.index())) {
+      const art = wiki.article(meta.id);
+      if (!art) continue;
+      art.sections.forEach((sec, i) => {
+        units.push({ id: `wiki:${art.id}#${i}`, kind: 'wiki', title: art.title, subtitle: sec.heading, text: sec.text.replace(/^### /gm, ''), md: sec.text,
+          topic: art.topic, pack: 'Wikipedia', fileType: 'wiki', public: true, ref: { wiki: art.id, section: i } });
+      });
+    }
     return units;
   }
 
+  let wikiVersion = -1;
   function getIndex() {
+    if (wiki.version !== wikiVersion) { wikiVersion = wiki.version; dirty = true; }
     if (dirty) { index = new SearchIndex(buildUnits()); dirty = false; }
     return index;
   }
@@ -200,6 +214,12 @@ export function createApp(opts = {}) {
     const lan = publicMode ? [{ address: 'online demo' }] : lanAddresses();
     add({ id: 'net', group: 'Group', label: lan.length ? 'Can host a group on local Wi-Fi' : 'Not connected to any local network', ok: lan.length > 0, optional: true,
       detail: lan.length ? `Phones can reach this PC at ${lan.map((a) => a.address).join(', ')}` : 'To host a group, connect to a router (it works without internet) or turn on a Wi-Fi hotspot.', href: '#/group' });
+    const ws = wiki.status();
+    add({ id: 'wiki', group: 'Library', label: `${ws.saved} of ${ws.total} encyclopedia articles saved`, ok: ws.saved >= ws.total * 0.8, optional: ws.saved === 0 && publicMode,
+      detail: ws.saved < ws.total ? 'Download the offline encyclopedia while you still have internet.' : 'Survival-relevant Wikipedia articles are on this PC.', href: '#/wiki' });
+    const ks = kitSummary(get('kit', { have: {} }).have || {});
+    add({ id: 'kit', group: 'Gear', label: `${ks.covered} of ${ks.essentials} essential supplies`, ok: ks.covered === ks.essentials,
+      detail: ks.covered === ks.essentials ? 'All essential gear ticked off.' : 'Tick off what you own and see what is still missing.', href: '#/kit' });
     let free = null;
     try { const st = fs.statfsSync(DATA_DIR); free = st.bavail * st.bsize; } catch {}
     const scored = checks.filter((c) => !c.optional);
@@ -532,7 +552,7 @@ export function createApp(opts = {}) {
     '.ico': 'image/x-icon', '.pdf': 'application/pdf', '.txt': 'text/plain; charset=utf-8', '.md': 'text/plain; charset=utf-8',
     '.webmanifest': 'application/manifest+json', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
   };
-  const GUEST_STATIC = /^\/(join\.html|join\.js|shared\.js|nmea\.js|styles\.css|icon\.svg|vendor\/leaflet\/[\w.-]+(?:\/[\w.-]+)?|vendor\/countries-(?:110m|50m|10m)\.json|vendor\/topojson-client\.min\.js|basemap\.js)$/;
+  const GUEST_STATIC = /^\/(join\.html|join\.js|shared\.js|nmea\.js|manifest\.webmanifest|icon-(?:192|512)\.png|styles\.css|icon\.svg|vendor\/leaflet\/[\w.-]+(?:\/[\w.-]+)?|vendor\/countries-(?:110m|50m|10m)\.json|vendor\/topojson-client\.min\.js|basemap\.js)$/;
 
   async function serveStatic(req, res, pathname, owner) {
     let rel = pathname === '/' ? '/index.html' : pathname;
@@ -598,6 +618,9 @@ export function createApp(opts = {}) {
       topics: [...new Set(guideList().map((g) => g.topic))],
       guides: guideList().map(({ sections, ...g }) => g),
       meetingPoints: plan.meetingPoints,
+      wiki: { saved: wiki.status().saved, total: wiki.status().total },
+      kit: kitSummary(get('kit', { have: {} }).have || {}),
+      maps: maps.list().length,
       group: group.active ? { name: group.state.session.name, members: group.roster().length, help: group.state.messages.filter((m) => m.type === 'help').slice(-3) } : null,
     };
   });
@@ -842,6 +865,42 @@ export function createApp(opts = {}) {
     return { publisher: k.publisher, keyId: k.keyId, publicKey: k.publicKey };
   });
 
+  // retrieval only — for the AI model that runs inside the browser
+  const retrieveRoute = (filterPublic) => ({ body }) => {
+    const q = String(body.question || '').trim().slice(0, 500);
+    const passages = retrieve(getIndex(), q, { filter: filterPublic || body.scope === 'guides' ? (u) => u.public : undefined, limit: 5 });
+    return {
+      question: q,
+      urgent: /\b(not breathing|stopped breathing|unconscious|unresponsive|no pulse|severe bleeding|chest pain|heart attack|stroke|seizure|overdose|poison|choking|anaphyla|carbon monoxide|suicid)/i.test(q) ? URGENT_NOTE : null,
+      sources: passages.map((p, i) => ({ n: i + 1, id: p.id, kind: p.kind, title: p.title, subtitle: p.subtitle, ref: p.ref, excerpt: p.excerpt, highlights: p.highlights, text: p.text.slice(0, 2400), coverage: p.coverage })),
+    };
+  };
+  route('POST', '/api/retrieve', 'owner', retrieveRoute(false));
+
+  // offline encyclopedia
+  route('GET', '/api/wiki', 'owner', () => wiki.status());
+  route('POST', '/api/wiki/download', 'owner', ({ body }) => wiki.start(Array.isArray(body.titles) ? body.titles.map(String) : null, { refresh: !!body.refresh && !publicMode }));
+  route('DELETE', '/api/wiki/:id', 'owner', ({ params }) => { if (publicMode) throw httpError(403, 'The shared encyclopedia can\'t be changed in the online demo.'); wiki.remove(params.id); return { ok: true }; });
+  const wikiArticle = ({ params }) => { const a = wiki.article(params.id); if (!a) throw httpError(404, 'Article not saved'); return a; };
+  route('GET', '/api/wiki/article/:id', 'owner', wikiArticle);
+  route('GET', '/api/public/wiki', 'member', () => wiki.status());
+  route('GET', '/api/public/wiki/article/:id', 'member', wikiArticle);
+  route('GET', '/files/wiki/:file', 'member', ({ req, res, params }) => {
+    const p = wiki.imagePath(params.file);
+    if (!p) throw httpError(404, 'Not found');
+    const ext = path.extname(p).slice(1).toLowerCase();
+    serveFile(req, res, p, { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' }[ext] || 'application/octet-stream');
+    return undefined;
+  });
+
+  // survival gear checklist
+  route('GET', '/api/kit', 'owner', () => { const have = get('kit', { have: {} }).have || {}; return { categories: KIT_CATEGORIES, items: KIT, have, summary: kitSummary(have) }; });
+  route('PUT', '/api/kit/:id', 'owner', ({ params, body }) => {
+    if (!KIT.find((k) => k.id === params.id)) throw httpError(404, 'Unknown item');
+    const k = store.update('kit', { have: {} }, (st) => { st.have ||= {}; if (body.have) st.have[params.id] = true; else delete st.have[params.id]; });
+    return { have: k.have, summary: kitSummary(k.have) };
+  });
+
   // outage log (shared with the group while a session runs)
   const logRoutes = (prefix, access) => {
     route('GET', prefix, access, () => get('log'));
@@ -927,7 +986,7 @@ export function createApp(opts = {}) {
     res.setHeader('x-content-type-options', 'nosniff');
     res.setHeader('referrer-policy', 'no-referrer');
     res.setHeader('x-frame-options', 'SAMEORIGIN');
-    res.setHeader('content-security-policy', "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self' blob:; connect-src 'self'; frame-src 'self'; object-src 'self'; base-uri 'none'; form-action 'self'");
+    res.setHeader('content-security-policy', "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com; frame-src 'self'; object-src 'self'; base-uri 'none'; form-action 'self'");
     const url = new URL(req.url, 'http://x');
     const pathname = decodeURI(url.pathname);
     const owner = opts.isOwner ? opts.isOwner(req) : ownerRequest(req);
@@ -968,7 +1027,7 @@ export function createApp(opts = {}) {
 
   const server = opts.noServer ? null : http.createServer(handle);
   if (server) server.requestTimeout = 0; // big map and pack uploads can take a while
-  return { server, handle, port, store, group, dataDir: DATA_DIR, readiness, publicMode };
+  return { server, handle, port, store, group, wiki, dataDir: DATA_DIR, readiness, publicMode };
 }
 
 // ---------- shared helpers ----------

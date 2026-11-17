@@ -122,3 +122,24 @@ test('NMEA, GPX and text chunking', () => {
   assert.equal(g.pins[0].name, 'W');
   assert.ok(chunkText('a\n\n'.repeat(3000)).length > 1);
 });
+
+test('encyclopedia: extract parsing drops reference sections', async () => {
+  const { parseExtract } = await import('../server/wiki.js');
+  const secs = parseExtract('Intro text that is long enough to keep around here.\n\n== Methods ==\nBoil water for one minute at a rolling boil, longer at altitude.\n=== Detail ===\nMore detail text here that is long enough.\n\n== See also ==\nOther\n\n== References ==\nRefs');
+  assert.deepEqual(secs.map((s) => s.heading), ['Overview', 'Methods']);
+  assert.match(secs[1].text, /### Detail/);
+});
+
+test('gear checklist tracks essentials', async () => {
+  const before = await j('/api/kit');
+  assert.equal(before.body.summary.covered, 0);
+  const r = await j('/api/kit/radio', { method: 'PUT', body: { have: true } });
+  assert.equal(r.body.summary.covered, 1);
+  assert.equal((await j('/api/kit/not-a-thing', { method: 'PUT', body: { have: true } })).status, 404);
+});
+
+test('retrieval for on-device AI returns passage text and prefers guides', async () => {
+  const { body } = await j('/api/retrieve', { method: 'POST', body: { question: 'how do I make water safe with bleach?' } });
+  assert.equal(body.sources[0].kind, 'guide');
+  assert.ok(body.sources[0].text.length > 200);
+});

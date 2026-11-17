@@ -4,6 +4,9 @@ import { mapView } from './views-map.js';
 import { planView, printView } from './views-plan.js';
 import { groupView, logView } from './views-group.js';
 import { packsView } from './views-packs.js';
+import { wikiView, wikiArticleView, kitView, aiView } from './views-extra.js';
+import * as ai from './ai.js';
+import { offlineSearch } from './offline.js';
 
 const NAV = [
   'Operations',
@@ -12,20 +15,23 @@ const NAV = [
   ['#/ask', 'ask', 'Ask'],
   ['#/map', 'map', 'Maps'],
   ['#/plan', 'plan', 'My plan'],
+  ['#/kit', 'kit', 'Gear'],
   'Intel',
-  ['#/library', 'book', 'Library'],
+  ['#/library', 'book', 'Field guides'],
+  ['#/wiki', 'globe', 'Encyclopedia'],
   ['#/notes', 'note', 'Notes'],
   'Comms',
   ['#/group', 'group', 'Group'],
   ['#/log', 'log', 'Outage log'],
   'System',
+  ['#/ai', 'chip', 'On-device AI'],
   ['#/packs', 'pack', 'Packs'],
   ['#/ready', 'ready', 'Readiness'],
   ['#/settings', 'settings', 'Settings'],
 ];
 
 // Codes shown above each page title.
-const CODES = { '': 'OPS-00 // Command', search: 'OPS-01 // Search', ask: 'OPS-02 // Ask', map: 'OPS-03 // Maps', plan: 'OPS-04 // Plan', print: 'OPS-04 // Printout', library: 'INT-01 // Library', guide: 'INT-01 // Guide', doc: 'INT-01 // Document', notes: 'INT-02 // Notes', note: 'INT-02 // Note', group: 'COM-01 // Group', log: 'COM-02 // Log', packs: 'SYS-01 // Packs', ready: 'SYS-02 // Readiness', settings: 'SYS-03 // Settings', download: 'SYS-04 // Deploy' };
+const CODES = { '': 'OPS-00 // Command', search: 'OPS-01 // Search', ask: 'OPS-02 // Ask', map: 'OPS-03 // Maps', plan: 'OPS-04 // Plan', print: 'OPS-04 // Printout', library: 'INT-01 // Library', guide: 'INT-01 // Guide', doc: 'INT-01 // Document', notes: 'INT-02 // Notes', note: 'INT-02 // Note', group: 'COM-01 // Group', log: 'COM-02 // Log', packs: 'SYS-01 // Packs', ready: 'SYS-02 // Readiness', settings: 'SYS-03 // Settings', download: 'SYS-05 // Deploy', wiki: 'INT-03 // Encyclopedia', kit: 'OPS-05 // Gear', ai: 'SYS-04 // On-device AI' };
 
 const ROUTES = {
   '': dashboard,
@@ -45,6 +51,9 @@ const ROUTES = {
   ready: readyView,
   settings: settingsView,
   download: downloadView,
+  wiki: (el, args, q) => (args.length ? wikiArticleView(el, args, q) : wikiView(el, args, q)),
+  kit: kitView,
+  ai: aiView,
 };
 
 let cleanup = null;
@@ -93,6 +102,7 @@ function notFound(el) {
 export function hrefFor(ref) {
   if (!ref) return '#/';
   if (ref.guide) return `#/guide/${encodeURIComponent(ref.guide)}${ref.section ? '/' + encodeURIComponent(ref.section) : ''}`;
+  if (ref.wiki) return `#/wiki/${encodeURIComponent(ref.wiki)}${ref.section != null ? '/' + ref.section : ''}`;
   if (ref.doc) return `#/doc/${encodeURIComponent(ref.doc)}/${ref.page || 1}`;
   if (ref.note) return `#/note/${encodeURIComponent(ref.note)}`;
   if (ref.pin) return `#/map?pin=${encodeURIComponent(ref.pin)}`;
@@ -114,10 +124,10 @@ export async function isPinned(id) {
   return (s.pinned || []).some((p) => p.id === id);
 }
 
-const KIND_LABEL = { guide: 'Guide', doc: 'Document', note: 'Note', pin: 'Map pin', route: 'Route', plan: 'My plan', pdf: 'PDF', text: 'Text' };
+const KIND_LABEL = { wiki: 'Wikipedia', guide: 'Guide', doc: 'Document', note: 'Note', pin: 'Map pin', route: 'Route', plan: 'My plan', pdf: 'PDF', text: 'Text' };
 const TOPIC_LABEL = {
   water: 'Water', power: 'Power outage', food: 'Food', 'first-aid': 'First aid', shelter: 'Shelter & warmth',
-  sanitation: 'Sanitation', communications: 'Communications', preparedness: 'Emergency kit', maps: 'Maps', notes: 'Notes', plan: 'My plan', documents: 'Documents',
+  sanitation: 'Sanitation', communications: 'Communications', preparedness: 'Preparedness', hazards: 'Disasters', medical: 'Health', navigation: 'Navigation', 'local-info': 'Local info', maps: 'Maps', notes: 'Notes', plan: 'My plan', documents: 'Documents',
 };
 export const topicLabel = (t) => TOPIC_LABEL[t] || (t ? t[0].toUpperCase() + t.slice(1).replace(/-/g, ' ') : 'Other');
 
@@ -135,9 +145,11 @@ async function dashboard(el) {
     ${d.group?.help?.length ? html`<div class="notice bad" style="margin-bottom:16px"><strong>${d.group.help.at(-1).fromName} asked for help</strong> ${ago(d.group.help.at(-1).ts)}. <a href="#/group">Open the group</a></div>` : ''}
     <div class="stat-row">
       <div class="stat"><div class="label">Readiness</div><div class="v ${r.score >= 80 ? 'ok' : r.score >= 50 ? 'warn' : 'bad'}">${r.score}%</div></div>
-      <div class="stat"><div class="label">Guides on disk</div><div class="v">${d.guides.length}</div></div>
-      <div class="stat"><div class="label">Meeting points</div><div class="v ${d.meetingPoints.length ? '' : 'bad'}">${d.meetingPoints.length}</div></div>
-      <div class="stat"><div class="label">Group</div><div class="v ${d.group ? 'ok' : ''}">${d.group ? gm + ' live' : 'offline'}</div></div>
+      <div class="stat"><div class="label">Field guides</div><div class="v">${d.guides.length}</div></div>
+      <a class="stat" href="#/wiki"><div class="label">Encyclopedia</div><div class="v ${d.wiki.saved === d.wiki.total ? 'ok' : d.wiki.saved ? 'warn' : 'bad'}">${d.wiki.saved}<span class="of">/${d.wiki.total}</span></div></a>
+      <a class="stat" href="#/ai"><div class="label">AI on device</div><div class="v" id="stat-ai">—</div></a>
+      <a class="stat" href="#/kit"><div class="label">Gear essentials</div><div class="v ${d.kit.pct === 100 ? 'ok' : d.kit.pct >= 50 ? 'warn' : 'bad'}">${d.kit.pct}%</div></a>
+      <a class="stat" href="#/map"><div class="label">Map areas</div><div class="v ${d.maps ? '' : 'warn'}">${d.maps}</div></a>
     </div>
     <form class="cmd" id="dash-search" role="search">
       ${icon('search')}
@@ -148,6 +160,10 @@ async function dashboard(el) {
       <a class="tile" href="#/ask"><span class="num">02</span>${icon('ask')}<strong>Ask</strong><span>Answers from your library, with sources</span></a>
       <a class="tile" href="#/map"><span class="num">03</span>${icon('map')}<strong>Maps</strong><span>Tactical map, pins, routes, range rings, GPS</span></a>
       <a class="tile" href="#/plan"><span class="num">04</span>${icon('plan')}<strong>My plan</strong><span>Contacts, rally points, grab list</span></a>
+      <a class="tile" href="#/wiki"><span class="num">05</span>${icon('globe')}<strong>Encyclopedia</strong><span>Wikipedia survival library, offline</span></a>
+      <a class="tile" href="#/kit"><span class="num">06</span>${icon('kit')}<strong>Gear</strong><span>The kit to own before the lights go out</span></a>
+      <a class="tile" href="#/ai"><span class="num">07</span>${icon('chip')}<strong>On-device AI</strong><span>Your own AI. No servers, no signal</span></a>
+      <a class="tile" href="#/group"><span class="num">08</span>${icon('group')}<strong>Group</strong><span>Check-ins over local Wi-Fi</span></a>
     </div>
     <div class="grid grid-2">
       <section class="card">
@@ -179,6 +195,8 @@ async function dashboard(el) {
       </section>
     </div>
   `);
+  if (ai.support().ok) ai.cachedTiers().then((c) => { const e = $('#stat-ai'); if (e) { e.textContent = c.length; e.className = 'v ' + (c.length ? 'ok' : ''); } });
+  else { const e = $('#stat-ai'); if (e) e.textContent = 'n/a'; }
   $('#dash-search').addEventListener('submit', (e) => {
     e.preventDefault();
     const q = new FormData(e.target).get('q').trim();
@@ -205,7 +223,14 @@ async function searchView(el, _args, query) {
     return;
   }
   const params = new URLSearchParams({ q, ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v)) });
-  const data = await api('/api/search?' + params);
+  let data;
+  let offline = false;
+  try { data = await api('/api/search?' + params); }
+  catch (err) {
+    if (err.status && err.status !== 503) throw err;
+    offline = true;
+    data = { results: await offlineSearch(q), facets: { topic: {}, pack: {}, type: {} } };
+  }
   const link = (k, v) => {
     const p = new URLSearchParams(params);
     if (filters[k] === v) p.delete(k); else p.set(k, v);
@@ -224,6 +249,7 @@ async function searchView(el, _args, query) {
         ${facet('pack', 'Pack', (v) => v)}
       </aside>
       <div>
+        ${offline ? html`<div class="notice warn" style="margin-bottom:10px">Can't reach the LASTSYNC server — showing matches from what this browser saved for offline use.</div>` : ''}
         <p class="muted">${data.results.length ? `${data.results.length}${data.results.length === 40 ? '+' : ''} matches` : ''}</p>
         ${data.results.length
           ? data.results.map((r) => html`<a class="result" href="${hrefFor(r.ref)}">
@@ -282,7 +308,8 @@ function saveAsk() { try { sessionStorage.setItem('ls-ask', JSON.stringify(askHi
 
 async function askView(el, _args, query) {
   const settings = await api('/api/settings');
-  const engine = settings.ai.provider === 'openai' ? `AI model: ${settings.ai.model}` : 'Built-in answers (no AI model)';
+  const devTier = ai.support().ok ? ai.preferred() : null;
+  const engine = devTier ? `On-device AI: ${devTier.name}` : settings.ai.provider === 'openai' ? `AI model: ${settings.ai.model}` : 'Built-in answers (no AI model)';
   mount(el, html`
     <div class="page-head">
       <div><h1>Ask LASTSYNC</h1><p>Answers come only from what's saved on this PC, and every answer links to its source.</p></div>
@@ -319,7 +346,20 @@ async function askView(el, _args, query) {
     qa.append(placeholder);
     placeholder.scrollIntoView({ block: 'end' });
     try {
-      const a = await api('/api/ask', { method: 'POST', body: { question: q, scope: $('#scope').checked ? 'guides' : 'all' } });
+      const scope = $('#scope').checked ? 'guides' : 'all';
+      let a = null;
+      if (devTier) a = await askOnDevice(q, scope, devTier, placeholder).catch((err) => { toast('On-device AI failed: ' + err.message + ' — using built-in answers', 'bad'); return null; });
+      if (!a) {
+        try { a = await api('/api/ask', { method: 'POST', body: { question: q, scope } }); }
+        catch (err) {
+          if (err.status && err.status !== 503) throw err;
+          const hits = await offlineSearch(q, 4);
+          a = { question: q, engine: 'builtin', urgent: null, covered: !!hits.length, format: 'markdown',
+            note: "Can't reach the LASTSYNC server — this answer comes from what this browser saved for offline use.",
+            answer: hits.length ? `**From ${hits[0].title} — ${hits[0].subtitle}** [1]\n\n${hits[0].md.slice(0, 1600)}` : "Nothing saved on this device matches. Open guides while online, or use “Save for offline” on the Get the app page.",
+            sources: hits.map((h, i) => ({ n: i + 1, used: i === 0, kind: h.kind, title: h.title, subtitle: h.subtitle, ref: h.ref, excerpt: h.excerpt, highlights: [] })) };
+        }
+      }
       askHistory.push(a);
       saveAsk();
       renderAll();
@@ -338,6 +378,23 @@ async function askView(el, _args, query) {
   });
   const pre = query.get('q');
   if (pre) { history.replaceState(null, '', '#/ask'); run(pre); }
+}
+
+// Ask with the model running in this browser: the server only retrieves passages.
+async function askOnDevice(q, scope, tier, placeholder) {
+  const r = await api('/api/retrieve', { method: 'POST', body: { question: q, scope } });
+  if (!r.sources.length || r.sources[0].coverage < 0.5) return null; // let the built-in answerer explain what's missing
+  const card = placeholder.querySelector('.a-card');
+  if (!ai.loaded() || ai.loaded().id !== tier.id) {
+    await ai.load(tier, (p, text) => mount(card, html`<span class="label">Loading ${tier.name} model</span><div class="progress" style="margin:8px 0"><i style="width:${Math.round(p * 100)}%"></i></div><small class="muted mono" style="font-size:.66rem">${text.slice(0, 120)}</small>`));
+  }
+  const text = await ai.answer(q, r.sources, (partial) => mount(card, html`<span class="label">${tier.name} · on this device</span><div class="prose" style="margin-top:6px">${markdown(partial)}</div>`));
+  const used = [...new Set([...text.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1])))];
+  return {
+    question: q, engine: `${tier.name} (on-device)`, urgent: r.urgent, note: null, format: 'markdown',
+    covered: !/saved sources don.t cover this/i.test(text), answer: text,
+    sources: r.sources.map((s) => ({ ...s, text: undefined, used: used.includes(s.n) })),
+  };
 }
 
 function renderAnswer(a, i) {
@@ -500,6 +557,31 @@ api('/api/status').then((s) => {
   renderHud();
 }).catch(() => {});
 startHud();
+if ('serviceWorker' in navigator && window.isSecureContext) navigator.serviceWorker.register('/sw.js').catch(() => {});
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); state.installPrompt = e; renderHud(); });
+window.addEventListener('appinstalled', () => { state.installPrompt = null; toast('LASTSYNC installed'); renderHud(); });
+document.addEventListener('click', async (e) => {
+  if (!e.target.closest('[data-install]') || !state.installPrompt) return;
+  state.installPrompt.prompt();
+  await state.installPrompt.userChoice.catch(() => {});
+  state.installPrompt = null;
+  renderHud();
+});
+
+// Fetch everything once so the service worker keeps a copy for offline use.
+export async function saveForOffline(onProgress) {
+  const urls = ['/', '/api/dashboard', '/api/guides', '/api/wiki', '/api/plan', '/api/kit', '/api/settings', '/api/readiness', '/api/pins', '/api/routes', '/api/maps', '/api/notes', '/api/library', '/api/status', '/vendor/countries-10m.json'];
+  const guides = await api('/api/guides').catch(() => []);
+  urls.push(...guides.map((g) => '/api/guides/' + g.id));
+  const w = await api('/api/wiki').catch(() => null);
+  for (const c of w?.catalog || []) for (const t of c.titles.filter((x) => x.saved)) {
+    urls.push('/api/wiki/article/' + t.id);
+    if (t.image) urls.push('/files/wiki/' + t.image);
+  }
+  let done = 0;
+  for (const u of urls) { await fetch(u, { credentials: 'same-origin' }).catch(() => {}); onProgress?.(++done, urls.length); }
+  return urls.length;
+}
 document.addEventListener('click', (e) => { if (e.target.closest('[data-print]')) window.print(); });
 
 // ---------- HUD (status bar) ----------
@@ -527,6 +609,7 @@ function renderHud() {
     <span class="hud-spacer"></span>
     ${g?.help ? html`<a class="hud-item alert" href="#/group"><span class="k">SOS</span><b>${g.help.fromName}</b></a>` : g ? html`<a class="hud-item ok" href="#/group"><span class="led"></span><span class="k">GROUP</span><b>LIVE</b></a>` : ''}
     ${r != null ? html`<a class="hud-item ${r >= 80 ? 'ok' : r >= 50 ? 'warn' : 'bad'}" href="#/ready"><span class="led"></span><span class="k">READY</span><b>${r}%</b></a>` : ''}
+    ${state.installPrompt ? html`<button class="hud-item ok" data-install style="background:none;border:0;border-right:1px solid var(--line);cursor:pointer;font:inherit;letter-spacing:inherit"><span class="led"></span><b>INSTALL APP</b></button>` : ''}
     <span class="hud-item"><span class="k">MODE</span><b>${state.public ? 'DEMO' : 'LOCAL'}</b></span>`);
 }
 function startHud() {
@@ -548,6 +631,11 @@ function startHud() {
 // ---------- get the app ----------
 async function downloadView(el) {
   const s = await api('/api/status');
+  setTimeout(() => $('#save-offline')?.addEventListener('click', async (e) => {
+    e.currentTarget.disabled = true;
+    const n = await saveForOffline((d, t) => { const st = $('#save-status'); if (st) st.textContent = `SAVING ${d}/${t}`; });
+    const st = $('#save-status'); if (st) st.textContent = `✓ ${n} ITEMS SAVED IN THIS BROWSER`;
+  }), 0);
   const url = s.downloadUrl;
   mount(el, html`
     <div class="dl-hero">
@@ -587,6 +675,9 @@ async function downloadView(el) {
         </dl>
       </section>
     </div>
+    <section class="card" style="margin-top:14px"><div class="card-title"><h2>Use this website offline</h2>${state.installPrompt ? html`<button class="btn" data-install>${icon('download')}Install as app</button>` : ''}</div>
+      <p class="muted">No download needed for the basics: save the guides, encyclopedia and your plan into this browser. Later, with no connection, open this site again (or the installed app) and they're still here. Search and Ask fall back to the saved copies.</p>
+      <div class="row"><button class="btn primary" id="save-offline">${icon('download')}Save for offline use</button><span class="muted mono" id="save-status" style="font-size:.75rem"></span></div></section>
     <section class="card" style="margin-top:14px"><h2>First launch</h2><p class="muted" style="margin:0">Windows SmartScreen may say the app is unrecognized because it isn't code-signed yet — choose <strong>More info → Run anyway</strong>. If Windows asks whether LASTSYNC may use private networks, choose <strong>Allow</strong> so phones can join your group.</p></section>`);
 }
 

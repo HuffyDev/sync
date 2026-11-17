@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { createApp, APP_DIR } from './index.js';
+import { Wiki } from './wiki.js';
 
 const ROOT = path.resolve(process.env.LASTSYNC_DATA || path.join(APP_DIR, 'data', 'public'));
 const PORT = Number(process.env.PORT) || 8787;
@@ -20,6 +21,8 @@ const UPLOADS = new Set(['/api/library/upload', '/api/maps/upload', '/api/packs/
 const GUEST_PATHS = /^\/(join(\.html|\.js)?$|api\/group\/|api\/public\/|api\/maps$|tiles\/)/;
 
 fs.mkdirSync(ROOT, { recursive: true });
+// One shared offline encyclopedia for every visitor.
+const sharedWiki = new Wiki(path.join(ROOT, '_shared', 'wiki'));
 const sha = (s) => crypto.createHash('sha256').update(s).digest();
 const live = new Map(); // id -> { app, lastUsed }
 const created = new Map(); // ip -> [timestamps]
@@ -85,6 +88,7 @@ function appFor(id) {
       port: PORT,
       publicMode: true,
       noServer: true,
+      wiki: sharedWiki,
       isOwner: (req) => req.lsOwner === true,
       inviteUrl: (req, code) => `${origin(req)}/join?ws=${id}#code=${code}`,
     });
@@ -121,7 +125,7 @@ function dirSize(dir) {
 // cookie exists) is answered by an empty, guest-only workspace.
 let blank = null;
 function blankApp() {
-  if (!blank) blank = createApp({ dataDir: path.join(ROOT, '_blank'), port: PORT, publicMode: true, noServer: true, isOwner: () => false });
+  if (!blank) blank = createApp({ dataDir: path.join(ROOT, '_blank'), port: PORT, publicMode: true, noServer: true, wiki: sharedWiki, isOwner: () => false });
   return blank;
 }
 

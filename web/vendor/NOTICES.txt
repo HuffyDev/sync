@@ -5,3 +5,4 @@ Third-party software bundled with LASTSYNC so it works offline:
 - qrcode-generator 1.4.4 — MIT License, (c) Kazuhiko Arase.
 - topojson-client 3.1.0 — ISC License, (c) Michael Bostock.
 - world-atlas 2.0.2 (countries-50m.json) — ISC License, (c) Michael Bostock; data from Natural Earth (public domain).
+- WebLLM 0.2.79 (@mlc-ai/web-llm) — Apache License 2.0, MLC team. In-browser AI engine; model weights download from Hugging Face on first use. See web-llm/LICENSE.

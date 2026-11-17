@@ -1,0 +1,16 @@
+{
+  "name": "LASTSYNC — offline survival system",
+  "short_name": "LASTSYNC",
+  "description": "Field guides, encyclopedia, maps, AI and group check-ins that keep working when the internet doesn't.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#020406",
+  "theme_color": "#020406",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

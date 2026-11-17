@@ -20,7 +20,8 @@ export function retrieve(index, question, { filter, limit = 6 } = {}) {
   const reranked = results.map((r) => {
     const heading = new Set(tokenize(`${r.subtitle || ''}`).map((t) => t.term));
     const hits = primary.filter((t) => heading.has(t)).length;
-    return { ...r, rank: r.score + hits * 2.5 + r.coverage * 2 };
+    // Vetted field guides outrank encyclopedia text for practical answers.
+    return { ...r, rank: r.score + hits * 2.5 + r.coverage * 2 + (r.kind === 'guide' ? 1.5 : 0) };
   }).sort((a, b) => b.rank - a.rank);
   const strong = reranked.filter((r) => r.coverage >= 0.5 || r.score >= 2.5);
   return strong.slice(0, limit).map((r) => {
