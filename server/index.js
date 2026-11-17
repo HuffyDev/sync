@@ -18,6 +18,7 @@ import { loadGuides, plainText, slug } from './guides.js';
 import { SearchIndex } from './search.js';
 import { ask, retrieve, URGENT_NOTE } from './ask.js';
 import { Wiki } from './wiki.js';
+import { VectorTiles, glyphs } from './vtiles.js';
 import { KIT, KIT_CATEGORIES, kitSummary } from './kit.js';
 import { Group, httpError } from './group.js';
 import * as packs from './packs.js';
@@ -60,6 +61,9 @@ export function createApp(opts = {}) {
   const maps = new MapStore(store, dirs.maps);
   // The encyclopedia is the same for everyone, so the online demo shares one copy.
   const wiki = opts.wiki || new Wiki(opts.wikiDir || path.join(DATA_DIR, 'wiki'));
+  // Street map tile cache — also shared between visitors in the online demo.
+  const vt = opts.vt || new VectorTiles(path.join(DATA_DIR, 'streetmap'));
+  const glyph = glyphs(CONTENT_DIR);
 
   const defaults = {
     settings: { hostName: '', ai: { provider: 'builtin', baseUrl: 'http://localhost:11434/v1', model: 'llama3.2', apiKey: '', timeoutSec: 90 }, pinned: [], printedAt: null, planUpdatedAt: null },
@@ -182,8 +186,10 @@ export function createApp(opts = {}) {
     add({ id: 'docs', group: 'Library', label: docs.length ? `${docs.length} of your own documents` : 'No documents of your own yet', ok: docs.length > 0, optional: true,
       detail: docs.length ? `${docs.filter((d) => d.type === 'pdf').length} PDFs, ${docs.filter((d) => d.type !== 'pdf').length} text files` : 'Add manuals, PDFs or local info (shelters, water points) before an outage.', href: '#/library' });
     const ml = maps.list();
-    add({ id: 'maps', group: 'Maps', label: ml.length ? `${ml.length} regional map${ml.length > 1 ? 's' : ''} saved` : 'No regional map saved', ok: ml.length > 0,
-      detail: ml.length ? ml.map((m) => `${m.name} (zoom ${m.minzoom}–${m.maxzoom}, ${fmtBytes(m.size)})`).join('; ') : 'Only the world outline is available offline. Import an .mbtiles file for your area.', href: '#/map' });
+    const areas = vt.areas();
+    const nMaps = ml.length + areas.length;
+    add({ id: 'maps', group: 'Maps', label: nMaps ? `${nMaps} map area${nMaps > 1 ? 's' : ''} saved for offline use` : 'No street map saved for offline use', ok: nMaps > 0,
+      detail: nMaps ? [...areas.map((a) => `${a.name} (street map, ${fmtBytes(a.bytes)})`), ...ml.map((m) => `${m.name} (zoom ${m.minzoom}–${m.maxzoom}, ${fmtBytes(m.size)})`)].join('; ') : 'Open Maps while online, frame your town and press “Save this area offline”.', href: '#/map' });
     const pins = get('pins');
     const routes = get('routes');
     add({ id: 'pins', group: 'Maps', label: `${pins.length} pins, ${routes.length} saved routes`, ok: pins.length > 0 && routes.length > 0, optional: routes.length === 0 && pins.length > 0,
@@ -620,7 +626,7 @@ export function createApp(opts = {}) {
       meetingPoints: plan.meetingPoints,
       wiki: { saved: wiki.status().saved, total: wiki.status().total },
       kit: kitSummary(get('kit', { have: {} }).have || {}),
-      maps: maps.list().length,
+      maps: maps.list().length + vt.areas().length,
       group: group.active ? { name: group.state.session.name, members: group.roster().length, help: group.state.messages.filter((m) => m.type === 'help').slice(-3) } : null,
     };
   });
@@ -893,6 +899,27 @@ export function createApp(opts = {}) {
     return undefined;
   });
 
+  // street map tiles, fonts and offline areas
+  route('GET', '/vt/:z/:x/:y', 'member', async ({ res, params }) => {
+    const buf = await vt.get(Number(params.z), Number(params.x), parseInt(params.y, 10));
+    if (!buf || !buf.length) { res.writeHead(204, { 'cache-control': buf ? 'max-age=86400' : 'no-cache' }); res.end(); return undefined; }
+    res.writeHead(200, { 'content-type': 'application/x-protobuf', 'content-length': buf.length, 'cache-control': 'max-age=86400' });
+    res.end(buf);
+    return undefined;
+  });
+  route('GET', '/glyphs/:stack/:range', 'member', ({ res, params }) => {
+    const buf = glyph(String(params.range).replace(/\.pbf$/, ''));
+    if (!buf) throw httpError(404, 'Not found');
+    res.writeHead(200, { 'content-type': 'application/x-protobuf', 'content-encoding': 'gzip', 'content-length': buf.length, 'cache-control': 'max-age=604800' });
+    res.end(buf);
+    return undefined;
+  });
+  route('GET', '/api/vt', 'owner', () => vt.status());
+  route('POST', '/api/vt/estimate', 'owner', ({ body }) => ({ tiles: vt.estimate(body.bbox, body.minzoom ?? 0, body.maxzoom ?? 14), limit: vt.maxSaveTiles }));
+  route('POST', '/api/vt/save', 'owner', ({ body }) => vt.saveArea(body));
+  route('DELETE', '/api/vt/areas/:id', 'owner', ({ params }) => { if (publicMode) throw httpError(403, 'Saved areas are shared in the online demo.'); vt.removeArea(params.id); return { ok: true }; });
+  route('POST', '/api/vt/clear', 'owner', async () => { if (publicMode) throw httpError(403, 'Not available in the online demo.'); await vt.clear(); return { ok: true }; });
+
   // survival gear checklist
   route('GET', '/api/kit', 'owner', () => { const have = get('kit', { have: {} }).have || {}; return { categories: KIT_CATEGORIES, items: KIT, have, summary: kitSummary(have) }; });
   route('PUT', '/api/kit/:id', 'owner', ({ params, body }) => {
@@ -991,7 +1018,7 @@ export function createApp(opts = {}) {
     const pathname = decodeURI(url.pathname);
     const owner = opts.isOwner ? opts.isOwner(req) : ownerRequest(req);
     try {
-      if (pathname.startsWith('/api/') || pathname.startsWith('/tiles/') || pathname.startsWith('/files/')) {
+      if (pathname.startsWith('/api/') || pathname.startsWith('/tiles/') || pathname.startsWith('/files/') || pathname.startsWith('/vt/') || pathname.startsWith('/glyphs/')) {
         for (const r of routes) {
           if (r.method !== req.method) continue;
           const m = r.re.exec(pathname);
@@ -1027,7 +1054,7 @@ export function createApp(opts = {}) {
 
   const server = opts.noServer ? null : http.createServer(handle);
   if (server) server.requestTimeout = 0; // big map and pack uploads can take a while
-  return { server, handle, port, store, group, wiki, dataDir: DATA_DIR, readiness, publicMode };
+  return { server, handle, port, store, group, wiki, vt, dataDir: DATA_DIR, readiness, publicMode };
 }
 
 // ---------- shared helpers ----------

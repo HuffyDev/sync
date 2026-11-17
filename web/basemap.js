@@ -17,13 +17,13 @@ export const PAPER = {
   border: 'rgba(60, 60, 60, 0.6)', grid: 'rgba(0, 0, 0, 0.06)', gridMajor: 'rgba(0, 0, 0, 0.12)', dots: false,
 };
 export const COLORS = {
-  ocean: '#03070b',
-  land: '#0e1c26',
-  landEdge: 'rgba(80, 210, 255, 0.55)',
-  landGlow: 'rgba(60, 200, 255, 0.10)',
-  border: 'rgba(80, 210, 255, 0.22)',
-  grid: 'rgba(80, 210, 255, 0.07)',
-  gridMajor: 'rgba(80, 210, 255, 0.13)',
+  ocean: '#0c0e11',
+  land: '#16181c',
+  landEdge: 'rgba(170, 185, 205, 0.42)',
+  landGlow: 'rgba(170, 185, 205, 0.05)',
+  border: 'rgba(170, 185, 205, 0.18)',
+  grid: 'rgba(255, 255, 255, 0.03)',
+  gridMajor: 'rgba(255, 255, 255, 0.06)',
   dots: true,
 };
 
@@ -137,7 +137,7 @@ function drawTile(canvas, coords, features, COLORS) {
   if (COLORS.dots && coords.z >= 2) {
     ctx.save();
     ctx.clip('evenodd');
-    ctx.fillStyle = 'rgba(80, 210, 255, 0.05)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
     const gap = 6 * dpr;
     for (let yy = 0; yy < S; yy += gap) for (let xx = (yy / gap) % 2 ? gap / 2 : 0; xx < S; xx += gap) ctx.fillRect(xx, yy, dpr, dpr);
     ctx.restore();

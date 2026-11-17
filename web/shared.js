@@ -169,16 +169,16 @@ export function slugify(s) {
 }
 
 export const CATEGORIES = {
-  meeting: { label: 'Meeting point', color: '#4da3ff', letter: 'M' },
-  water: { label: 'Water source', color: '#22d3ee', letter: 'W' },
-  shelter: { label: 'Shelter', color: '#a78bfa', letter: 'S' },
-  medical: { label: 'Medical help', color: '#ff2e4d', letter: '+' },
-  food: { label: 'Food', color: '#2ef2a0', letter: 'F' },
-  power: { label: 'Power / charging', color: '#e8f15a', letter: 'P' },
-  comms: { label: 'Communications', color: '#c084fc', letter: 'C' },
-  hazard: { label: 'Hazard', color: '#ff5c7a', letter: '!' },
-  home: { label: 'Home', color: '#cbd5e1', letter: 'H' },
-  other: { label: 'Other', color: '#7dd3fc', letter: '•' },
+  meeting: { label: 'Meeting point', color: '#7aa7e0', letter: 'M' },
+  water: { label: 'Water source', color: '#6fb3d9', letter: 'W' },
+  shelter: { label: 'Shelter', color: '#b39ddb', letter: 'S' },
+  medical: { label: 'Medical help', color: '#f0566a', letter: '+' },
+  food: { label: 'Food', color: '#5fd49a', letter: 'F' },
+  power: { label: 'Power / charging', color: '#d9c36b', letter: 'P' },
+  comms: { label: 'Communications', color: '#c4a7e7', letter: 'C' },
+  hazard: { label: 'Hazard', color: '#e3896b', letter: '!' },
+  home: { label: 'Home', color: '#d0d4da', letter: 'H' },
+  other: { label: 'Other', color: '#9fb4c9', letter: '•' },
 };
 
 export const MSG = {
@@ -249,7 +249,7 @@ export function pinIcon(category) {
 }
 
 export function msgIcon(type) {
-  const color = { safe: '#2ef2a0', help: '#ff2e4d', meet: '#4da3ff' }[type] || '#8aa0ad';
+  const color = { safe: '#5fd49a', help: '#f0566a', meet: '#7aa7e0' }[type] || '#9ba1aa';
   const glyph = { safe: '✓', help: '!', meet: 'M' }[type] || '•';
   return window.L.divIcon({ className: 'mk-wrap', html: markerHtml(color, glyph, type === 'help' ? 'pulse alert' : ''), iconSize: [28, 35], iconAnchor: [14, 34], popupAnchor: [0, -30] });
 }
@@ -327,6 +327,9 @@ const P = {
   globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/>',
   kit: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M12 11v5M9.5 13.5h5"/>',
   chip: '<rect x="6" y="6" width="12" height="12" rx="1.5"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
+  nav: '<path d="M12 2 19 21l-7-4-7 4z"/>',
+  cube: '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
+  compass: '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2.2 5-4.8 2 2.2-5z"/>',
   ruler: '<path d="m3 17 14-14 4 4L7 21z"/><path d="m7 13 2 2M10 10l2 2M13 7l2 2"/>',
   target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
   expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',

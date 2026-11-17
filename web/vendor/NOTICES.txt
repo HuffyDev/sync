@@ -6,3 +6,6 @@ Third-party software bundled with LASTSYNC so it works offline:
 - topojson-client 3.1.0 — ISC License, (c) Michael Bostock.
 - world-atlas 2.0.2 (countries-50m.json) — ISC License, (c) Michael Bostock; data from Natural Earth (public domain).
 - WebLLM 0.2.79 (@mlc-ai/web-llm) — Apache License 2.0, MLC team. In-browser AI engine; model weights download from Hugging Face on first use. See web-llm/LICENSE.
+- MapLibre GL JS 5.24.1 — BSD 3-Clause License, MapLibre contributors. See maplibre/LICENSE.txt.
+- Map label glyphs (content/glyphs) — GoNotoKurrent (Noto Sans, SIL Open Font License 1.1) via smp-noto-glyphs (MIT).
+- Street map data (downloaded on use) — © OpenMapTiles © OpenStreetMap contributors (ODbL), served by OpenFreeMap.

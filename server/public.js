@@ -9,6 +9,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { createApp, APP_DIR } from './index.js';
 import { Wiki } from './wiki.js';
+import { VectorTiles } from './vtiles.js';
 
 const ROOT = path.resolve(process.env.LASTSYNC_DATA || path.join(APP_DIR, 'data', 'public'));
 const PORT = Number(process.env.PORT) || 8787;
@@ -18,11 +19,13 @@ const MAX_LIVE = Number(process.env.LASTSYNC_MAX_LIVE) || 80;
 const QUOTA = (Number(process.env.LASTSYNC_QUOTA_MB) || 200) * 1024 * 1024;
 const ID_RE = /^[A-Za-z0-9_-]{12}$/;
 const UPLOADS = new Set(['/api/library/upload', '/api/maps/upload', '/api/packs/inspect', '/api/routes/gpx']);
-const GUEST_PATHS = /^\/(join(\.html|\.js)?$|api\/group\/|api\/public\/|api\/maps$|tiles\/)/;
+const GUEST_PATHS = /^\/(join(\.html|\.js)?$|api\/group\/|api\/public\/|api\/maps$|tiles\/|vt\/|glyphs\/)/;
 
 fs.mkdirSync(ROOT, { recursive: true });
 // One shared offline encyclopedia for every visitor.
 const sharedWiki = new Wiki(path.join(ROOT, '_shared', 'wiki'));
+// One shared street-map cache, capped so visitors can't fill the disk.
+const sharedTiles = new VectorTiles(path.join(ROOT, '_shared', 'streetmap'), { capBytes: (Number(process.env.LASTSYNC_MAP_CACHE_MB) || 2048) * 1048576, maxSaveTiles: 2500 });
 const sha = (s) => crypto.createHash('sha256').update(s).digest();
 const live = new Map(); // id -> { app, lastUsed }
 const created = new Map(); // ip -> [timestamps]
@@ -89,6 +92,7 @@ function appFor(id) {
       publicMode: true,
       noServer: true,
       wiki: sharedWiki,
+      vt: sharedTiles,
       isOwner: (req) => req.lsOwner === true,
       inviteUrl: (req, code) => `${origin(req)}/join?ws=${id}#code=${code}`,
     });
@@ -125,7 +129,7 @@ function dirSize(dir) {
 // cookie exists) is answered by an empty, guest-only workspace.
 let blank = null;
 function blankApp() {
-  if (!blank) blank = createApp({ dataDir: path.join(ROOT, '_blank'), port: PORT, publicMode: true, noServer: true, wiki: sharedWiki, isOwner: () => false });
+  if (!blank) blank = createApp({ dataDir: path.join(ROOT, '_blank'), port: PORT, publicMode: true, noServer: true, wiki: sharedWiki, vt: sharedTiles, isOwner: () => false });
   return blank;
 }
 

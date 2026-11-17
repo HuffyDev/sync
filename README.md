@@ -28,7 +28,7 @@ Then open http://localhost:8787. Set `LASTSYNC_DATA` to choose where data is sto
 | Installable web app | Get the app | The website installs like an app and keeps working offline in the browser: a service worker caches the app, and "Save for offline use" stores guides, the encyclopedia and your plan. If the server can't be reached, Search and Ask fall back to the saved copies |
 | Local search | Search | BM25 ranking with survival synonyms ("cleaning water" finds "disinfecting"). Excerpts with highlights, jumps to the exact section, PDF page, note or pin. Filters by topic, pack and type |
 | Ask LASTSYNC | Ask | Answers only from your saved library, with numbered citations. Says so when the library doesn't cover a question. Flags emergencies ("call 911/112/999") |
-| Offline maps & GPS | Maps | Built-in world outline; import regional `.mbtiles` maps; pins by category; draw routes or import GPX; USB GPS receivers over Web Serial (NMEA) or device location; "last updated" time |
+| Street map & GPS | Maps | MapLibre vector map: streets with names, buildings (3D when tilted), water, parks, places, and emergency places (hospitals, pharmacies, police, fire stations, drinking water, shelters, fuel). Every area you view while online is cached on the PC; **Save this area offline** downloads a town down to street level. Offline it falls back to saved areas, then to a built-in world map. Tools: pins, routes, measure (distance, bearing, walking time), range rings, right-click menu, search across pins/places/streets/lat-lon, follow-GPS, rotate/tilt, layers and legend, USB GPS (NMEA) and device location. Imported `.mbtiles` raster maps still work as overlays |
 | Household plan | My plan | Contacts, meeting points (with map locations), responsibilities, grab / go / check-on checklists. Autosaves |
 | Printable sheet | My plan › Printable sheet | One page: contacts, meeting points, a small map, checklists and quick facts |
 | Packs | Packs | Bundle selected guides, documents, notes, pins, routes and maps into one `.lspack` file for USB sharing. SHA-256 per file, optional Ed25519 publisher signatures, verified offline before install |
@@ -63,6 +63,9 @@ Browsers only allow GPS on secure (https) pages, so phones on the local `http://
 
 ## Maps
 
+Street map data © OpenMapTiles © OpenStreetMap contributors, served by [OpenFreeMap](https://openfreemap.org) and cached locally; set `LASTSYNC_VECTOR_TILEJSON` to use another OpenMapTiles-compatible source. Map labels use bundled Noto Sans glyphs, so text works offline. The online demo shares one tile cache (capped by `LASTSYNC_MAP_CACHE_MB`, default 2048).
+
+
 Import raster MBTiles (PNG/JPG/WebP tiles), for example made in QGIS or MapTiler from data you're allowed to use, or received in a pack. Vector (`.pbf`) MBTiles aren't supported yet. Please don't bulk-download tiles from openstreetmap.org: its tile usage policy forbids that.
 
 ## Online demo (Replit)
@@ -92,7 +95,7 @@ The Windows ZIP is built by `.github/workflows/lastsync-release.yml` on a Window
 ## Not built yet
 
 - Meshtastic radio messaging
-- Vector map tiles and offline turn-by-turn routing
+- Offline turn-by-turn routing
 - Larger knowledge packs (Wikipedia selections, repair manuals)
 - Save for Offline (capture web pages)
 - Encrypted document vault

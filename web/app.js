@@ -76,7 +76,9 @@ export function parseHash() {
   return { name: parts[0] || '', args: parts.slice(1), query: new URLSearchParams(q) };
 }
 
+let routeGen = 0;
 async function route() {
+  const gen = ++routeGen;
   const { name, args, query } = parseHash();
   const view = ROUTES[name] || notFound;
   if (cleanup) { try { cleanup(); } catch {} cleanup = null; }
@@ -84,7 +86,10 @@ async function route() {
   const el = $('#view');
   el.innerHTML = '';
   try {
-    cleanup = (await view(el, args, query)) || null;
+    const done = (await view(el, args, query)) || null;
+    // A newer navigation started while this page was loading: discard this one.
+    if (gen !== routeGen) { try { done?.(); } catch {} return; }
+    cleanup = done;
     const h1 = el.querySelector('.page-head h1');
     if (h1 && CODES[name] && !h1.previousElementSibling?.classList.contains('kicker')) h1.insertAdjacentHTML('beforebegin', `<p class="kicker">${esc(CODES[name])}</p>`);
   } catch (err) {
@@ -169,7 +174,7 @@ async function dashboard(el) {
       <section class="card">
         <div class="card-title"><h2>Field guides</h2><a class="btn small ghost" href="#/library">All</a></div>
         <div class="chips">
-          ${Object.entries(byTopic).map(([t, gs]) => gs.map((g) => html`<a class="chip" href="#/guide/${g.id}">${topicLabel(t)}</a>`))}
+          ${Object.entries(byTopic).map(([t, gs]) => gs.map((g) => html`<a class="chip" href="#/guide/${g.id}" title="${topicLabel(t)}">${g.title}</a>`))}
         </div>
         ${d.meetingPoints.length ? html`<hr><h3>Rally points</h3><ul class="list">${d.meetingPoints.slice(0, 3).map((m) => html`<li class="row between"><span><strong>${m.name}</strong><br><small>${m.address || m.when || ''}</small></span>${m.lat != null ? html`<a class="btn small" href="#/map?lat=${m.lat}&lon=${m.lon}">${icon('map')}Show</a>` : ''}</li>`)}</ul>` : ''}
       </section>

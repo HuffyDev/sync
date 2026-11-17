@@ -1,6 +1,7 @@
-modules = ["nodejs-22"]
-# Stop + Run pulls the latest code from GitHub, then restarts the app.
-run = "timeout 20 git pull --ff-only origin main || echo 'git pull skipped'; npm run start:public"
+modules = ["nodejs-20", "web"]
+# Run always syncs this copy to the latest code on GitHub (main), then starts.
+# Your saved data lives in data/, which git ignores, so it is never touched.
+run = "git fetch -q origin main && git reset -q --hard origin/main && echo 'Updated to latest' || echo 'Update skipped (offline?)'; npm run start:public"
 
 [deployment]
 # Reserved VM: group sessions keep a live connection open to each phone.
@@ -11,6 +12,9 @@ run = ["npm", "run", "start:public"]
 localPort = 8787
 externalPort = 80
 
+[nix]
+channel = "stable-25_05"
+
 [workflows]
 runButton = "start"
 
@@ -20,5 +24,5 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "timeout 20 git pull --ff-only origin main || echo 'git pull skipped'; npm run start:public"
+args = "git fetch -q origin main && git reset -q --hard origin/main && echo 'Updated to latest' || echo 'Update skipped (offline?)'; npm run start:public"
 waitForPort = 8787
