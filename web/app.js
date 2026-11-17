@@ -561,6 +561,7 @@ watchGroup();
 api('/api/status').then((s) => {
   state.public = s.mode === 'public';
   state.downloadUrl = s.downloadUrl;
+  if (state.public) { const brand = document.querySelector('.brand'); if (brand) { brand.href = '/welcome'; brand.title = 'Front page'; } }
   renderNav(currentNav());
   if (state.public) mount($('#side-foot'), html`<span class="offline-dot"></span>DEMO UPLINK<br>DATA KEPT 7 DAYS IN THIS BROWSER<br><a href="#/source" class="foot-link">OPEN SOURCE · MIT</a>`);
   renderHud();
