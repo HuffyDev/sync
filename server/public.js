@@ -13,6 +13,8 @@ import { VectorTiles } from './vtiles.js';
 
 const ROOT = path.resolve(process.env.LASTSYNC_DATA || path.join(APP_DIR, 'data', 'public'));
 const PORT = Number(process.env.PORT) || 8787;
+// Sites allowed to show the demo inside a frame (the host's preview pane).
+const FRAME_ANCESTORS = process.env.LASTSYNC_FRAME_ANCESTORS || "'self' https://replit.com https://*.replit.com https://*.replit.dev https://*.repl.co https://*.replit.app";
 const TTL_MS = (Number(process.env.LASTSYNC_TTL_DAYS) || 7) * 864e5;
 const MAX_WORKSPACES = Number(process.env.LASTSYNC_MAX_WORKSPACES) || 500;
 const MAX_LIVE = Number(process.env.LASTSYNC_MAX_LIVE) || 80;
@@ -52,7 +54,9 @@ const isHttps = (req) => String(req.headers['x-forwarded-proto'] || '').split(',
 const origin = (req) => `${isHttps(req) ? 'https' : 'http'}://${String(req.headers['x-forwarded-host'] || req.headers.host).split(',')[0].trim()}`;
 const clientIp = (req) => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
 function cookie(req, name, value, maxAgeSec) {
-  return `${name}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}${isHttps(req) ? '; Secure' : ''}`;
+  // Over https use SameSite=None so the session also works inside the hosting
+  // site's preview frame (browsers drop Lax cookies in cross-site frames).
+  return `${name}=${value}; Path=/; HttpOnly; ${isHttps(req) ? 'SameSite=None; Secure' : 'SameSite=Lax'}; Max-Age=${maxAgeSec}`;
 }
 function addCookie(res, c) {
   const prev = res.getHeader('set-cookie');
@@ -91,6 +95,7 @@ function appFor(id) {
       port: PORT,
       publicMode: true,
       noServer: true,
+      frameAncestors: FRAME_ANCESTORS,
       wiki: sharedWiki,
       vt: sharedTiles,
       isOwner: (req) => req.lsOwner === true,
@@ -129,7 +134,7 @@ function dirSize(dir) {
 // cookie exists) is answered by an empty, guest-only workspace.
 let blank = null;
 function blankApp() {
-  if (!blank) blank = createApp({ dataDir: path.join(ROOT, '_blank'), port: PORT, publicMode: true, noServer: true, wiki: sharedWiki, vt: sharedTiles, isOwner: () => false });
+  if (!blank) blank = createApp({ dataDir: path.join(ROOT, '_blank'), port: PORT, publicMode: true, noServer: true, frameAncestors: FRAME_ANCESTORS, wiki: sharedWiki, vt: sharedTiles, isOwner: () => false });
   return blank;
 }
 
@@ -204,5 +209,13 @@ server.requestTimeout = 0;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`LASTSYNC online demo on port ${PORT} (workspaces in ${ROOT})`);
 });
+// Hosts sometimes hand the app a different PORT than the one their preview
+// waits on; also answer on 8787 so either works.
+if (PORT !== 8787) {
+  const extra = http.createServer(server.listeners('request')[0]);
+  extra.requestTimeout = 0;
+  extra.on('error', () => {});
+  extra.listen(8787, '0.0.0.0', () => console.log('Also listening on port 8787'));
+}
 sweep();
 setInterval(sweep, 3600e3).unref();

@@ -996,7 +996,8 @@ export function createApp(opts = {}) {
     tries.push(now);
     joinAttempts.set(ip, tries);
     const { member, token } = group.join(body.code, body.name);
-    res.setHeader('set-cookie', `ls_member=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${60 * 60 * 24 * 30}`);
+    const https = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
+    res.setHeader('set-cookie', `ls_member=${token}; Path=/; HttpOnly; ${https && opts.frameAncestors ? 'SameSite=None; Secure' : 'SameSite=Strict'}; Max-Age=${60 * 60 * 24 * 30}`);
     return { member };
   });
 
@@ -1022,8 +1023,10 @@ export function createApp(opts = {}) {
   async function handle(req, res) {
     res.setHeader('x-content-type-options', 'nosniff');
     res.setHeader('referrer-policy', 'no-referrer');
-    res.setHeader('x-frame-options', 'SAMEORIGIN');
-    res.setHeader('content-security-policy', "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com; frame-src 'self'; object-src 'self'; base-uri 'none'; form-action 'self'");
+    // The offline app refuses to be framed by other sites. The online demo may
+    // be shown inside the hosting site's preview frame (e.g. Replit).
+    if (!opts.frameAncestors) res.setHeader('x-frame-options', 'SAMEORIGIN');
+    res.setHeader('content-security-policy', "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com; frame-src 'self'; object-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors " + (opts.frameAncestors || "'self'"));
     const url = new URL(req.url, 'http://x');
     const pathname = decodeURI(url.pathname);
     const owner = opts.isOwner ? opts.isOwner(req) : ownerRequest(req);
