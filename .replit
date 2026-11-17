@@ -1,0 +1,12 @@
+modules = ["nodejs-22"]
+# Run pulls the latest code from GitHub first, so Stop + Run updates the app.
+run = "timeout 20 git pull --ff-only origin main || echo 'git pull skipped'; npm run start:public"
+
+[deployment]
+# Reserved VM: group sessions keep a live connection open to each phone.
+deploymentTarget = "vm"
+run = ["npm", "run", "start:public"]
+
+[[ports]]
+localPort = 8787
+externalPort = 80

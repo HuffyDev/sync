@@ -30,6 +30,15 @@ export function createApp(opts = {}) {
   const CONTENT_DIR = opts.contentDir || path.join(APP_DIR, 'content');
   const DATA_DIR = opts.dataDir || process.env.LASTSYNC_DATA || path.join(APP_DIR, 'data');
   const port = opts.port ?? 8787;
+  // Public mode = the online demo (e.g. on Replit). Each visitor gets their own
+  // workspace (see server/public.js); uploads are capped and the AI-model
+  // setting is off, because a model address typed by a visitor would let them
+  // make this server call arbitrary URLs.
+  const publicMode = !!opts.publicMode;
+  const LIMITS = publicMode
+    ? { doc: 25 * 1024 * 1024, map: 100 * 1024 * 1024, pack: 100 * 1024 * 1024 }
+    : { doc: 1024 * 1024 * 1024, map: 64 * 1024 * 1024 * 1024, pack: 64 * 1024 * 1024 * 1024 };
+  const DOWNLOAD_URL = process.env.LASTSYNC_DOWNLOAD_URL || 'https://github.com/HuffyDev/sync/releases/latest';
 
   const dirs = {
     library: path.join(DATA_DIR, 'library', 'files'),
@@ -188,7 +197,7 @@ export function createApp(opts = {}) {
       add({ id: 'pack:' + p.id, group: 'Packs', label: `${p.name} (v${p.version})`, ok: p.status === 'verified' || p.status === 'unsigned' || p.status === 'signed-untrusted',
         optional: true, detail: `${statusLabel(p.status)} · published ${String(p.published).slice(0, 10)}${p.published < yearAgo ? ' — over a year old, look for an update' : ''}`, href: '#/packs' });
     }
-    const lan = lanAddresses();
+    const lan = publicMode ? [{ address: 'online demo' }] : lanAddresses();
     add({ id: 'net', group: 'Group', label: lan.length ? 'Can host a group on local Wi-Fi' : 'Not connected to any local network', ok: lan.length > 0, optional: true,
       detail: lan.length ? `Phones can reach this PC at ${lan.map((a) => a.address).join(', ')}` : 'To host a group, connect to a router (it works without internet) or turn on a Wi-Fi hotspot.', href: '#/group' });
     let free = null;
@@ -579,7 +588,7 @@ export function createApp(opts = {}) {
   };
 
   // status & dashboard
-  route('GET', '/api/status', 'owner', () => ({ version: VERSION, guides: guides.size, lan: lanAddresses(), port, group: group.active, dataDir: DATA_DIR }));
+  route('GET', '/api/status', 'owner', () => ({ version: VERSION, guides: guides.size, lan: publicMode ? [] : lanAddresses(), port, group: group.active, dataDir: publicMode ? 'your browser session on this demo server' : DATA_DIR, mode: publicMode ? 'public' : 'local', downloadUrl: DOWNLOAD_URL }));
   route('GET', '/api/dashboard', 'owner', () => {
     const r = readiness();
     const plan = get('plan', defaults.plan);
@@ -626,7 +635,7 @@ export function createApp(opts = {}) {
     const id = newId('d_');
     const ext = type === 'pdf' ? '.pdf' : (String(query.ext || '.txt').match(/^\.(txt|md|markdown)$/i)?.[0] || '.txt');
     const file = id + ext.toLowerCase();
-    const size = await saveUpload(req, path.join(dirs.library, file), 1024 * 1024 * 1024);
+    const size = await saveUpload(req, path.join(dirs.library, file), LIMITS.doc);
     if (type === 'pdf') {
       const head = Buffer.alloc(5);
       const fd = fs.openSync(path.join(dirs.library, file), 'r');
@@ -696,7 +705,7 @@ export function createApp(opts = {}) {
   route('POST', '/api/maps/upload', 'owner:raw', async ({ req, query }) => {
     const id = newId('map_');
     const file = id + '.mbtiles';
-    await saveUpload(req, path.join(dirs.maps, file), 64 * 1024 * 1024 * 1024);
+    await saveUpload(req, path.join(dirs.maps, file), LIMITS.map);
     try {
       return maps.register(id, file, str(query.name, 80));
     } catch (err) {
@@ -727,6 +736,7 @@ export function createApp(opts = {}) {
     store.update('settings', defaults.settings, (s) => {
       if (body.hostName !== undefined) s.hostName = str(body.hostName, 40);
       if (body.ai) {
+        if (publicMode && body.ai.provider === 'openai') throw httpError(400, 'Connecting an AI model is turned off in the online demo. Download the offline app to use your own model.');
         const cur = { ...defaults.settings.ai, ...(s.ai || {}) };
         s.ai = {
           provider: body.ai.provider === 'openai' ? 'openai' : 'builtin',
@@ -742,6 +752,7 @@ export function createApp(opts = {}) {
     return settingsView();
   });
   route('POST', '/api/settings/test-ai', 'owner', async () => {
+    if (publicMode) return { ok: false, error: 'Turned off in the online demo.' };
     const s = get('settings', defaults.settings);
     const passages = [{ title: 'Test', subtitle: '', text: 'Boil water at a rolling boil for 1 minute to make it safe to drink.' }];
     const { modelAnswer } = await import('./ask.js');
@@ -795,7 +806,7 @@ export function createApp(opts = {}) {
   route('POST', '/api/packs/inspect', 'owner:raw', async ({ req }) => {
     const uploadId = newId('u_');
     const file = path.join(dirs.uploads, uploadId + '.lspack');
-    await saveUpload(req, file, 64 * 1024 * 1024 * 1024);
+    await saveUpload(req, file, LIMITS.pack);
     let verification;
     try { verification = await packs.verifyPack(file, trustedKeys()); } catch (err) { fs.rmSync(file, { force: true }); throw httpError(400, err.message); }
     pendingUploads.set(uploadId, { file, verification, at: Date.now() });
@@ -867,9 +878,13 @@ export function createApp(opts = {}) {
   });
   route('POST', '/api/group/end', 'owner', () => { group.end(); return { ok: true }; });
   route('POST', '/api/group/code', 'owner', () => ({ code: group.newCode() }));
-  route('GET', '/api/group/invite', 'owner', () => {
+  route('GET', '/api/group/invite', 'owner', ({ req }) => {
     if (!group.active) throw httpError(404, 'No session');
     const code = group.state.session.code;
+    if (opts.inviteUrl) {
+      const url = opts.inviteUrl(req, code);
+      return { code, urls: [{ name: 'Link', address: new URL(url).host, url, display: url.replace(/#.*$/, '') }] };
+    }
     return { code, urls: lanAddresses().map((a) => ({ ...a, url: `http://${a.address}:${port}/join#code=${code}` })) };
   });
   route('DELETE', '/api/group/members/:id', 'owner', ({ params }) => { group.remove(params.id); return { ok: true }; });
@@ -915,7 +930,7 @@ export function createApp(opts = {}) {
     res.setHeader('content-security-policy', "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self' blob:; connect-src 'self'; frame-src 'self'; object-src 'self'; base-uri 'none'; form-action 'self'");
     const url = new URL(req.url, 'http://x');
     const pathname = decodeURI(url.pathname);
-    const owner = ownerRequest(req);
+    const owner = opts.isOwner ? opts.isOwner(req) : ownerRequest(req);
     try {
       if (pathname.startsWith('/api/') || pathname.startsWith('/tiles/') || pathname.startsWith('/files/')) {
         for (const r of routes) {
@@ -951,9 +966,9 @@ export function createApp(opts = {}) {
     }
   }
 
-  const server = http.createServer(handle);
-  server.requestTimeout = 0; // big map and pack uploads can take a while
-  return { server, port, store, group, dataDir: DATA_DIR, readiness };
+  const server = opts.noServer ? null : http.createServer(handle);
+  if (server) server.requestTimeout = 0; // big map and pack uploads can take a while
+  return { server, handle, port, store, group, dataDir: DATA_DIR, readiness, publicMode };
 }
 
 // ---------- shared helpers ----------

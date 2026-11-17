@@ -4,9 +4,12 @@
   "description": "Offline survival system for blackouts and prolonged outages.",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "start": "node server/index.js",
+    "start:public": "node server/public.js",
     "test": "node --test"
   }
 }

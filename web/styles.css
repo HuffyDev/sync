@@ -353,3 +353,5 @@ kbd { font-family: var(--mono); font-size: 0.8em; padding: 1px 6px; border: 1px 
 .modal-back { position: fixed; inset: 0; z-index: 1500; background: rgba(0, 0, 0, 0.6); display: grid; place-items: center; padding: 16px; }
 .modal { width: min(460px, 100%); max-height: 90vh; overflow: auto; }
 body:has(.phone-tabs:not([hidden])) .toast-wrap { bottom: calc(86px + env(safe-area-inset-bottom)); }
+
+.demo-bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: center; padding: 9px 16px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-2)); border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); font-size: 0.9rem; text-align: center; }

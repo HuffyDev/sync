@@ -1,0 +1,62 @@
+name: LASTSYNC Windows build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Run tests
+        run: npm test
+
+      - name: Assemble portable folder
+        shell: pwsh
+        run: node scripts/package.mjs (Get-Command node).Source dist/LASTSYNC
+
+      - name: Build LASTSYNC.exe launcher
+        shell: pwsh
+        run: |
+          $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+          & $csc /nologo /target:exe /optimize+ /out:dist/LASTSYNC/LASTSYNC.exe launcher/LastSync.cs
+          if (-not (Test-Path dist/LASTSYNC/LASTSYNC.exe)) { throw 'launcher build failed' }
+
+      - name: Smoke test the packaged app offline
+        shell: pwsh
+        run: |
+          $env:LASTSYNC_DATA = "$env:RUNNER_TEMP\lastsync-smoke"
+          $p = Start-Process -FilePath dist/LASTSYNC/runtime/node.exe -ArgumentList 'dist/LASTSYNC/app/server/index.js' -PassThru -NoNewWindow
+          Start-Sleep -Seconds 3
+          $r = Invoke-RestMethod http://localhost:8787/api/search?q=cleaning%20water
+          Stop-Process -Id $p.Id
+          if ($r.results.Count -lt 1) { throw 'search returned nothing' }
+          Write-Host "Top result:" $r.results[0].title '>' $r.results[0].subtitle
+
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path dist/LASTSYNC -DestinationPath dist/LASTSYNC-windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LASTSYNC-windows
+          path: dist/LASTSYNC-windows.zip
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/LASTSYNC-windows.zip

@@ -58,8 +58,8 @@ export async function groupView(el) {
     mount($('#invite'), html`<div class="row" style="align-items:flex-start;gap:18px">
       <div class="qr">${qrSvg(u.url)}</div>
       <div class="stack" style="flex:1;min-width:200px">
-        <p style="margin:0">Phones on the same Wi-Fi: open the camera and scan the code. No app or internet needed.</p>
-        <div><small class="muted">Or type this address in the phone's browser</small><br><strong class="mono" style="overflow-wrap:anywhere">http://${u.address}:${location.port || 80}/join</strong></div>
+        <p style="margin:0">${u.display ? 'Have people scan the code with their phone camera, or send them the link.' : 'Phones on the same Wi-Fi: open the camera and scan the code. No app or internet needed.'}</p>
+        <div><small class="muted">${u.display ? 'Invite link (they also need the code)' : "Or type this address in the phone's browser"}</small><br><strong class="mono" style="overflow-wrap:anywhere">${u.display || `http://${u.address}:${location.port || 80}/join`}</strong></div>
         <div><small class="muted">Invite code</small><br><span class="code-big">${invite.code}</span></div>
         ${invite.urls.length > 1 ? html`<label class="field"><span>Network</span><select id="net">${invite.urls.map((x, i) => html`<option value="${i}" ${i === urlIdx ? 'selected' : ''}>${x.name} — ${x.address}</option>`)}</select></label>` : ''}
       </div></div>`);

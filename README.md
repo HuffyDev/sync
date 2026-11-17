@@ -11,7 +11,6 @@ Everything runs on the PC at `http://localhost:8787`. No account, no cloud, no i
 **From source (any OS, Node 22.13+):**
 
 ```bash
-cd lastsync
 npm start
 ```
 
@@ -62,6 +61,19 @@ Browsers only allow GPS on secure (https) pages, so phones on the local `http://
 
 Import raster MBTiles (PNG/JPG/WebP tiles), for example made in QGIS or MapTiler from data you're allowed to use, or received in a pack. Vector (`.pbf`) MBTiles aren't supported yet. Please don't bulk-download tiles from openstreetmap.org: its tile usage policy forbids that.
 
+## Online demo (Replit)
+
+`npm run start:public` runs LASTSYNC as a website so people can try it before downloading. The offline app trusts whoever is sitting at the PC; online there is no such person, so the demo works differently:
+
+- Every visitor gets a **private workspace**, tied to a secret cookie. Visitors never see each other's notes or plans.
+- Group invites are links (`/join?ws=…#code=…`). People who open one join that visitor's group as guests and get the same limited access as phones on Wi-Fi.
+- Workspaces are deleted after 7 days without use. Uploads are capped (25 MB documents, 100 MB maps and packs, 200 MB per visitor), and new workspaces are rate-limited per IP.
+- Connecting an AI model is turned off, because a model address typed by a visitor would let them make the server fetch any URL. Ask uses built-in answers.
+
+**Connect to Replit:** on replit.com choose *Create App → Import from GitHub*, pick `HuffyDev/sync`, and press **Run**. The included `.replit` pulls the latest code and starts the demo on port 8787. To publish, use **Deploy → Reserved VM**, since group sessions keep live connections open. Optional environment variables: `LASTSYNC_TTL_DAYS`, `LASTSYNC_QUOTA_MB`, `LASTSYNC_MAX_WORKSPACES`, `LASTSYNC_DOWNLOAD_URL`.
+
+Replit's disk is reset when the app is redeployed, so demo data is temporary by design.
+
 ## Develop
 
 ```bash
@@ -71,7 +83,7 @@ npm start
 
 Layout: `server/` (zero-dependency Node server: search, ask, packs, maps via built-in `node:sqlite`, group over Server-Sent Events), `web/` (vanilla ES modules, no build step; vendored Leaflet, PDF.js and a QR generator in `web/vendor/`), `content/guides/` (bundled guides as Markdown with front matter), `launcher/` (C# source for `LASTSYNC.exe`).
 
-The Windows ZIP is built by `.github/workflows/lastsync-release.yml` on a Windows runner. It runs the tests, bundles `node.exe`, compiles the launcher, smoke-tests the packaged app and zips it. Push a tag like `lastsync-v1.0.0` to publish a release.
+The Windows ZIP is built by `.github/workflows/lastsync-release.yml` on a Windows runner. It runs the tests, bundles `node.exe`, compiles the launcher, smoke-tests the packaged app and zips it. Every push to `main` builds the ZIP as a workflow artifact; push a tag like `v1.0.0` to publish it as a GitHub Release (the demo's Download button points at the latest release).
 
 ## Not built yet
 

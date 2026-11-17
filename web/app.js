@@ -396,6 +396,11 @@ async function settingsView(el) {
       <p class="muted">Phones on the same Wi-Fi can reach this PC at ${status.lan.length ? status.lan.map((a) => `http://${a.address}:${status.port}`).join(', ') : '(no network connected)'} — but only the group pages and public guides, after joining with your invite code.</p>
     </section>`);
   const f = $('#setf');
+  if (status.mode === 'public') {
+    f.querySelector('input[value=openai]').disabled = true;
+    f.querySelector('input[value=builtin]').checked = true;
+    f.querySelector('input[value=openai]').closest('.row').insertAdjacentHTML('afterend', '<div class="notice warn">Connecting an AI model is turned off in the online demo. In the offline app you can connect a local model (Ollama, LM Studio, llama.cpp) that keeps working in a blackout.</div>');
+  }
   const sync = () => { $('#model-fields').style.display = f.provider.value === 'openai' ? '' : 'none'; };
   sync();
   $$('input[name=provider]', f).forEach((r) => r.addEventListener('change', sync));
@@ -465,6 +470,11 @@ function renderAlerts() {
 window.addEventListener('hashchange', route);
 route();
 watchGroup();
+api('/api/status').then((s) => {
+  state.public = s.mode === 'public';
+  if (!state.public) return;
+  mount($('#demo'), html`<div class="demo-bar">You're using the <strong>online demo</strong>. What you add is kept on this server for 7 days and only this browser can see it. The real LASTSYNC runs offline on your PC, with no internet needed. <a class="btn small primary" href="${s.downloadUrl}" target="_blank" rel="noopener">${icon('download')}Download for Windows</a></div>`);
+}).catch(() => {});
 document.addEventListener('click', (e) => { if (e.target.closest('[data-print]')) window.print(); });
 
 // Re-render the current page through the router (so the old page is cleaned
