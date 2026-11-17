@@ -11,13 +11,13 @@
   <link rel="stylesheet" href="/styles.css">
   <script src="/vendor/topojson-client.min.js"></script>
   <script type="module" src="/landing.js"></script>
+  <script type="module" src="/relay-anim.js"></script>
 </head>
 <body class="lp">
-  <canvas id="lp-bg" aria-hidden="true"></canvas>
   <header class="lp-nav">
     <a class="lp-brand" href="/welcome"><img src="/icon.svg" alt="" width="26" height="26"><span>LASTSYNC</span></a>
     <nav class="lp-links" aria-label="Sections">
-      <a href="#features">Features</a><a href="#how">How it works</a><a href="#open">Open source</a>
+      <a href="#relay">Crypto relay</a><a href="#features">Features</a><a href="#how">How it works</a><a href="#open">Open source</a>
     </nav>
     <div class="lp-nav-cta">
       <a class="btn small ghost" href="https://github.com/HuffyDev/sync" target="_blank" rel="noopener">GitHub</a>
@@ -25,8 +25,27 @@
     </div>
   </header>
 
+  <section class="lp-x" id="relay">
+    <canvas id="lp-relay" aria-hidden="true"></canvas>
+    <div class="lp-x-inner">
+      <div class="lp-x-copy">
+        <div class="lp-pill"><span class="lp-led"></span>OFFLINE CRYPTO RELAY<span class="lp-sep">·</span>BTC<span class="lp-sep">·</span>SOL</div>
+        <h1>Send crypto.<br><span>No internet required.</span></h1>
+        <p class="lp-sub">Sign in your own wallet — even with no connection. LASTSYNC verifies it, carries it phone-to-phone over local Wi-Fi, and broadcasts it the instant any device finds a signal.</p>
+        <div class="lp-ctas">
+          <a class="btn primary" href="/?enter=1#/relay">Open the relay</a>
+          <a class="btn" href="#how-relay">How it works</a>
+          <a class="btn ghost" href="https://github.com/HuffyDev/sync/blob/main/server/relay.js" target="_blank" rel="noopener">Read the code</a>
+        </div>
+        <div class="lp-x-facts"><span>{</span>keys never leave your wallet<span>·</span>every signature checked<span>·</span>broadcast on first signal<span>}</span></div>
+        <div class="lp-txlog" aria-hidden="true"><div id="lp-txlines"></div></div>
+      </div>
+    </div>
+  </section>
+
   <main class="lp-main">
     <section class="lp-hero">
+      <canvas id="lp-bg" aria-hidden="true"></canvas>
       <div class="lp-copy">
         <div class="lp-pill"><span class="lp-led"></span><span id="lp-state">ALL SYSTEMS LOCAL</span><span class="lp-sep">·</span>v1.0<span class="lp-sep">·</span>MIT</div>
         <h1>Stay in sync<br><span>when the grid goes dark.</span></h1>
@@ -61,6 +80,12 @@
       <article><span class="lp-num">04</span><h3>Encyclopedia</h3><p>64 survival-relevant Wikipedia articles — medicine, water, power, navigation, disasters — saved for offline.</p></article>
       <article><span class="lp-num">05</span><h3>Household check-ins</h3><p>Your laptop hosts the group over local Wi-Fi. Phones scan a QR code and send I'm safe, Meet here or I need help.</p></article>
       <article><span class="lp-num">06</span><h3>Plan &amp; gear</h3><p>Contacts, rally points and a grab list, a printable one-page backup, and a gear checklist with an essentials score.</p></article>
+    </section>
+
+    <section class="lp-how lp-how-relay" id="how-relay">
+      <div><span class="lp-step">1</span><div><h3>Sign it offline</h3><p>In your own wallet. Bitcoin: Sparrow or Electrum sign with no internet. Solana: use a durable nonce so it never expires.</p></div></div>
+      <div><span class="lp-step">2</span><div><h3>LASTSYNC carries it</h3><p>Paste it or scan its QR code. It shows exactly who gets paid and how much, checks the signature, and shares it with your group.</p></div></div>
+      <div><span class="lp-step">3</span><div><h3>First signal sends it</h3><p>Laptop or any phone in the group — whoever gets a connection first broadcasts it, and LASTSYNC tracks it to confirmation.</p></div></div>
     </section>
 
     <section class="lp-how" id="how">

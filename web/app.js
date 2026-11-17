@@ -7,11 +7,13 @@ import { packsView } from './views-packs.js';
 import { wikiView, wikiArticleView, kitView, aiView } from './views-extra.js';
 import * as ai from './ai.js';
 import { sourceView } from './views-source.js';
+import { relayView } from './views-relay.js';
 import { offlineSearch } from './offline.js';
 
 const NAV = [
   'Operations',
   ['#/', 'home', 'Command'],
+  ['#/relay', 'send', 'Crypto relay'],
   ['#/search', 'search', 'Search'],
   ['#/ask', 'ask', 'Ask'],
   ['#/map', 'map', 'Maps'],
@@ -33,7 +35,7 @@ const NAV = [
 ];
 
 // Codes shown above each page title.
-const CODES = { '': 'OPS-00 // Command', search: 'OPS-01 // Search', ask: 'OPS-02 // Ask', map: 'OPS-03 // Maps', plan: 'OPS-04 // Plan', print: 'OPS-04 // Printout', library: 'INT-01 // Library', guide: 'INT-01 // Guide', doc: 'INT-01 // Document', notes: 'INT-02 // Notes', note: 'INT-02 // Note', group: 'COM-01 // Group', log: 'COM-02 // Log', packs: 'SYS-01 // Packs', ready: 'SYS-02 // Readiness', settings: 'SYS-03 // Settings', download: 'SYS-05 // Deploy', source: 'SYS-06 // Open source', wiki: 'INT-03 // Encyclopedia', kit: 'OPS-05 // Gear', ai: 'SYS-04 // On-device AI' };
+const CODES = { '': 'OPS-00 // Command', search: 'OPS-01 // Search', ask: 'OPS-02 // Ask', map: 'OPS-03 // Maps', plan: 'OPS-04 // Plan', print: 'OPS-04 // Printout', library: 'INT-01 // Library', guide: 'INT-01 // Guide', doc: 'INT-01 // Document', notes: 'INT-02 // Notes', note: 'INT-02 // Note', group: 'COM-01 // Group', log: 'COM-02 // Log', packs: 'SYS-01 // Packs', ready: 'SYS-02 // Readiness', settings: 'SYS-03 // Settings', download: 'SYS-05 // Deploy', source: 'SYS-06 // Open source', relay: 'OPS-01 // Crypto relay', wiki: 'INT-03 // Encyclopedia', kit: 'OPS-05 // Gear', ai: 'SYS-04 // On-device AI' };
 
 const ROUTES = {
   '': dashboard,
@@ -56,6 +58,7 @@ const ROUTES = {
   wiki: (el, args, q) => (args.length ? wikiArticleView(el, args, q) : wikiView(el, args, q)),
   kit: kitView,
   source: sourceView,
+  relay: relayView,
   ai: aiView,
 };
 
@@ -152,6 +155,29 @@ async function dashboard(el) {
     <div class="page-head"><div><h1>Command center</h1><p>Every system below runs on this machine. No uplink required.</p></div>
       <div class="row"><a class="btn" href="#/print">${icon('print')}Printout</a><a class="btn primary" href="#/group">${icon('group')}${d.group ? 'Group live' : 'Start group'}</a></div></div>
     ${d.group?.help?.length ? html`<div class="notice bad" style="margin-bottom:16px"><strong>${d.group.help.at(-1).fromName} asked for help</strong> ${ago(d.group.help.at(-1).ts)}. <a href="#/group">Open the group</a></div>` : ''}
+    <a class="relay-banner" href="#/relay">
+      <div class="rb-copy">
+        <p class="kicker">Offline crypto relay</p>
+        <h2>Send crypto with no internet.</h2>
+        <p>Sign in your own wallet — offline is fine. LASTSYNC checks it, carries it across your group, and broadcasts it on the first signal.</p>
+        <div class="rb-tags"><span>BTC</span><span>SOL · durable nonce</span><span>keys never leave your wallet</span></div>
+      </div>
+      <div class="rb-rail" aria-hidden="true">
+        <div class="rb-node"><b>WALLET</b><small>signed</small></div>
+        <div class="rb-line"><i></i><i></i><i></i></div>
+        <div class="rb-node"><b>LASTSYNC</b><small>verified</small></div>
+        <div class="rb-line"><i></i><i></i><i></i></div>
+        <div class="rb-node rb-nosig"><b>MESH</b><small>no signal…</small></div>
+        <div class="rb-line"><i></i><i></i><i></i></div>
+        <div class="rb-node rb-ok"><b>CHAIN</b><small>confirmed</small></div>
+      </div>
+      <div class="rb-stats">
+        <div><b class="${d.relay.queued ? 'warn' : ''}">${d.relay.queued}</b><span>waiting</span></div>
+        <div><b>${d.relay.sent}</b><span>sent</span></div>
+        <div><b class="ok">${d.relay.confirmed}</b><span>confirmed</span></div>
+        <span class="btn primary small">Open relay →</span>
+      </div>
+    </a>
     <div class="stat-row">
       <div class="stat"><div class="label">Readiness</div><div class="v ${r.score >= 80 ? 'ok' : r.score >= 50 ? 'warn' : 'bad'}">${r.score}%</div></div>
       <div class="stat"><div class="label">Field guides</div><div class="v">${d.guides.length}</div></div>

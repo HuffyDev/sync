@@ -20,6 +20,7 @@ import { ask, retrieve, URGENT_NOTE } from './ask.js';
 import { Wiki } from './wiki.js';
 import { VectorTiles, glyphs } from './vtiles.js';
 import { sourceManifest, readSourceFile } from './source.js';
+import { Relay, decodeTx, RELAY_HOSTS } from './relay.js';
 import { KIT, KIT_CATEGORIES, kitSummary } from './kit.js';
 import { Group, httpError } from './group.js';
 import * as packs from './packs.js';
@@ -65,6 +66,9 @@ export function createApp(opts = {}) {
   // Street map tile cache — also shared between visitors in the online demo.
   const vt = opts.vt || new VectorTiles(path.join(DATA_DIR, 'streetmap'));
   const glyph = glyphs(CONTENT_DIR);
+  // Offline crypto relay: carries transactions you already signed; never holds keys.
+  const relay = new Relay(store, () => group.broadcast('relay', {}));
+  const relayOrigins = Object.values(RELAY_HOSTS).map((u) => { try { return new URL(u).origin; } catch { return ''; } }).filter(Boolean).join(' ');
 
   const defaults = {
     settings: { hostName: '', ai: { provider: 'builtin', baseUrl: 'http://localhost:11434/v1', model: 'llama3.2', apiKey: '', timeoutSec: 90 }, pinned: [], printedAt: null, planUpdatedAt: null },
@@ -559,7 +563,7 @@ export function createApp(opts = {}) {
     '.ico': 'image/x-icon', '.pdf': 'application/pdf', '.txt': 'text/plain; charset=utf-8', '.md': 'text/plain; charset=utf-8',
     '.webmanifest': 'application/manifest+json', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
   };
-  const GUEST_STATIC = /^\/(welcome\.html|landing\.js|join\.html|join\.js|shared\.js|nmea\.js|manifest\.webmanifest|icon-(?:192|512)\.png|styles\.css|icon\.svg|vendor\/leaflet\/[\w.-]+(?:\/[\w.-]+)?|vendor\/countries-(?:110m|50m|10m)\.json|vendor\/topojson-client\.min\.js|basemap\.js)$/;
+  const GUEST_STATIC = /^\/(welcome\.html|landing\.js|relay-anim\.js|join\.html|join\.js|shared\.js|nmea\.js|manifest\.webmanifest|icon-(?:192|512)\.png|styles\.css|icon\.svg|vendor\/leaflet\/[\w.-]+(?:\/[\w.-]+)?|vendor\/countries-(?:110m|50m|10m)\.json|vendor\/topojson-client\.min\.js|basemap\.js)$/;
 
   async function serveStatic(req, res, pathname, owner) {
     let rel = pathname === '/' ? '/index.html' : pathname;
@@ -629,6 +633,7 @@ export function createApp(opts = {}) {
       wiki: { saved: wiki.status().saved, total: wiki.status().total },
       kit: kitSummary(get('kit', { have: {} }).have || {}),
       maps: maps.list().length + vt.areas().length,
+      relay: relay.view().counts,
       group: group.active ? { name: group.state.session.name, members: group.roster().length, help: group.state.messages.filter((m) => m.type === 'help').slice(-3) } : null,
     };
   });
@@ -931,6 +936,32 @@ export function createApp(opts = {}) {
     return undefined;
   });
 
+  // offline crypto relay
+  route('GET', '/api/relay', 'owner', () => relay.view());
+  route('POST', '/api/relay/decode', 'owner', ({ body }) => { try { const { raw, ...d } = decodeTx(body.tx); return d; } catch (err) { throw httpError(400, err.message); } });
+  route('POST', '/api/relay', 'owner', ({ body }) => { try { return relay.add(body.tx, get('settings', defaults.settings).hostName || 'this device', body.note); } catch (err) { throw httpError(err.status || 400, err.message); } });
+  route('POST', '/api/relay/:qid/retry', 'owner', ({ params }) => {
+    const list = relay.list();
+    const it = list.find((x) => x.qid === params.qid);
+    if (!it) throw httpError(404, 'Not found');
+    if (it.signed) { it.status = 'queued'; it.lastTry = null; it.lastError = null; relay.save(list); relay.tick().catch(() => {}); }
+    return it;
+  });
+  route('DELETE', '/api/relay/:qid', 'owner', ({ params }) => { relay.remove(params.qid); return { ok: true }; });
+  // group members (phones) can see the queue, add a transaction, or broadcast one from their own connection
+  route('GET', '/api/group/relay', 'member', () => ({ ...relay.view(), hosts: RELAY_HOSTS }));
+  route('POST', '/api/group/relay', 'member', ({ body, member }) => {
+    if (!group.allow('relay:' + member)) throw httpError(429, 'Too many in a minute.');
+    try { return relay.add(body.tx, group.state.members[member]?.name || 'a phone', body.note); } catch (err) { throw httpError(err.status || 400, err.message); }
+  });
+  route('POST', '/api/group/relay/:qid/result', 'member', ({ params, body, member }) => {
+    const by = group.state.members[member]?.name || 'a phone';
+    const it = relay.list().find((x) => x.qid === params.qid);
+    if (!it) throw httpError(404, 'Not found');
+    if (body.ok) return relay.record(params.qid, { ok: true, id: it.id }, by); // confirmation is re-checked by this server later
+    return relay.record(params.qid, { ok: false, terminal: false, error: String(body.error || 'Failed').slice(0, 300) }, by);
+  });
+
   // survival gear checklist
   route('GET', '/api/kit', 'owner', () => { const have = get('kit', { have: {} }).have || {}; return { categories: KIT_CATEGORIES, items: KIT, have, summary: kitSummary(have) }; });
   route('PUT', '/api/kit/:id', 'owner', ({ params, body }) => {
@@ -1027,7 +1058,7 @@ export function createApp(opts = {}) {
     // The offline app refuses to be framed by other sites. The online demo may
     // be shown inside the hosting site's preview frame (e.g. Replit).
     if (!opts.frameAncestors) res.setHeader('x-frame-options', 'SAMEORIGIN');
-    res.setHeader('content-security-policy', "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com; frame-src 'self'; object-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors " + (opts.frameAncestors || "'self'"));
+    res.setHeader('content-security-policy', "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com " + relayOrigins + "; frame-src 'self'; object-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors " + (opts.frameAncestors || "'self'"));
     const url = new URL(req.url, 'http://x');
     const pathname = decodeURI(url.pathname);
     const owner = opts.isOwner ? opts.isOwner(req) : ownerRequest(req);

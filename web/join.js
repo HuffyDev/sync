@@ -68,6 +68,7 @@ function joined() {
     receipt: (r) => { const m = S.snap.messages.find((x) => x.id === r.id); if (m) { m.receipts[r.memberId] = r.ts; if (S.tab === 'messages') render(); } },
     members: (list) => { S.snap.members = list; if (S.tab === 'board' || S.tab === 'checkin') render(); },
     session: (s) => { if (s) { S.snap.session = s; render(); } },
+    relay: () => { if (S.tab === 'relay') relay(); },
     log: (e) => { const i = S.log.findIndex((x) => x.id === e.id); if (i >= 0) S.log[i] = e; else S.log.push(e); if (S.tab === 'log') render(); },
     ended: () => { S.stream.close(); mount(app, html`<div class="notice warn" style="margin-top:20px">The group session has ended.</div>`); $('#tabs').hidden = true; },
     removed: () => { S.stream.close(); mount(app, html`<div class="notice warn" style="margin-top:20px">You were removed from the group.</div>`); $('#tabs').hidden = true; },
@@ -87,7 +88,7 @@ function banner() {
   mount($('#banner'), S.connected ? '' : html`<div class="alert-bar" style="background:var(--accent);color:var(--accent-ink)">Lost connection to the laptop — retrying… Stay on the same Wi-Fi.</div>`);
 }
 
-const TABS = [['checkin', 'check', 'Check in'], ['messages', 'ask', 'Messages'], ['board', 'group', 'Board'], ['guides', 'book', 'Guides'], ['log', 'log', 'Log']];
+const TABS = [['checkin', 'check', 'Check in'], ['messages', 'ask', 'Messages'], ['board', 'group', 'Board'], ['relay', 'send', 'Relay'], ['guides', 'book', 'Guides'], ['log', 'log', 'Log']];
 function renderTabs() {
   mount($('#tabs'), html`${TABS.map(([k, ic, label]) => html`<button data-tab="${k}" class="${S.tab === k ? 'on' : ''}">${icon(ic)}${label}${k === 'messages' && S.unread ? html`<span class="dot"></span>` : ''}</button>`)}`);
   $$('[data-tab]').forEach((b) => b.addEventListener('click', () => { S.tab = b.dataset.tab; if (S.tab === 'messages') S.unread = 0; render(); window.scrollTo(0, 0); }));
@@ -97,7 +98,7 @@ function me() { return S.snap.members.find((m) => m.id === S.me); }
 
 function render() {
   renderTabs();
-  ({ checkin, messages, board, guides, log })[S.tab]();
+  ({ checkin, messages, board, relay, guides, log })[S.tab]();
 }
 
 // ---------- check in ----------
@@ -232,6 +233,51 @@ async function guides(state = {}) {
   }
   $$('[data-g]', res).forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); guides({ guide: a.dataset.g, section: a.dataset.sec }); }));
   $$('[data-w]', res).forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); guides({ wiki: a.dataset.w, section: a.dataset.sec }); }));
+}
+
+// ---------- crypto relay ----------
+// A phone with mobile data can broadcast a transaction the laptop is holding.
+async function phoneBroadcast(it, hosts) {
+  if (it.chain === 'bitcoin') {
+    const res = await fetch(hosts.bitcoin + '/tx', { method: 'POST', body: it.raw, headers: { 'content-type': 'text/plain' } });
+    const t = (await res.text()).trim();
+    if (res.ok || /already/i.test(t)) return { ok: true };
+    return { ok: false, error: t.slice(0, 200) || 'HTTP ' + res.status };
+  }
+  const res = await fetch(hosts.solana, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'sendTransaction', params: [it.raw, { encoding: 'base64', preflightCommitment: 'confirmed', maxRetries: 5 }] }) });
+  const j = await res.json().catch(() => ({}));
+  if (j.result || /already been processed/i.test(j.error?.message || '')) return { ok: true };
+  return { ok: false, error: (j.error?.message || 'HTTP ' + res.status).slice(0, 200) };
+}
+
+async function relay() {
+  let d;
+  try { d = await api('/api/group/relay'); } catch (err) { mount(app, html`<div class="notice bad" style="margin-top:12px">${err.message}</div>`); return; }
+  const label = (it) => (it.confirmed ? ['ok', 'Confirmed'] : { queued: ['warn', 'Waiting for signal'], sent: ['blue', 'Broadcast'], expired: ['bad', 'Expired'], rejected: ['bad', 'Rejected'], 'needs-signature': ['bad', 'Not signed'] }[it.status] || ['', it.status]);
+  mount(app, html`<h1 style="font-size:1.3rem;margin-top:8px">Crypto relay</h1>
+    <p class="muted" style="margin-top:-4px">Signed transactions the group is carrying. If your phone has mobile data, you can send one out now.</p>
+    <div class="card" style="padding:12px">${d.items.length ? d.items.map((it) => { const st = label(it); return html`<div class="relay-item" style="grid-template-columns:auto 1fr">
+      <span class="chain ${it.chain}">${it.chain === 'bitcoin' ? 'BTC' : 'SOL'}</span>
+      <div class="ri-main"><strong>${it.note || it.summary}</strong><small class="faint mono">by ${it.by} · ${ago(it.addedAt)}</small>
+        <div class="row" style="margin-top:6px"><span class="badge ${st[0]}">${st[1]}</span>${it.status === 'queued' ? html`<button class="btn small primary" data-send="${it.qid}">Broadcast from this phone</button>` : ''}</div>
+        ${it.lastError && it.status === 'queued' ? html`<small style="color:var(--warn)">${it.lastError}</small>` : ''}</div></div>`; }) : html`<div class="empty">Nothing to relay.</div>`}</div>
+    <form id="rf" class="card stack" style="margin-top:12px;padding:12px"><strong>Add a signed transaction</strong>
+      <textarea name="tx" rows="4" class="mono" style="font-size:.76rem" placeholder="Bitcoin raw hex, or Solana base64 / base58" required></textarea>
+      <input name="note" placeholder="Note (optional)" maxlength="140"><button class="btn primary">Add to the group relay</button>
+      <small class="muted">Only signed transactions are accepted.</small></form>`);
+  $$('[data-send]').forEach((b) => b.addEventListener('click', async () => {
+    const it = d.items.find((x) => x.qid === b.dataset.send);
+    b.disabled = true; b.textContent = 'Sending…';
+    let r;
+    try { r = await phoneBroadcast(it, d.hosts); } catch { r = { ok: false, error: 'No internet on this phone right now.' }; }
+    await api(`/api/group/relay/${it.qid}/result`, { method: 'POST', body: r }).catch(() => {});
+    toast(r.ok ? 'Broadcast from your phone' : r.error, r.ok ? '' : 'bad');
+    relay();
+  }));
+  $('#rf').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try { await api('/api/group/relay', { method: 'POST', body: { tx: e.target.tx.value, note: e.target.note.value } }); toast('Added to the relay'); relay(); } catch (err) { toast(err.message, 'bad'); }
+  });
 }
 
 // ---------- log ----------
