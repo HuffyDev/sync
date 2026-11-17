@@ -77,7 +77,7 @@ Import raster MBTiles (PNG/JPG/WebP tiles), for example made in QGIS or MapTiler
 
 ## Website (Replit)
 
-`npm run start:public` runs LASTSYNC as a website. The offline app trusts whoever is sitting at the PC; online there is no such person, so the demo works differently:
+`npm run start:public` runs LASTSYNC as a website. The offline app trusts whoever is sitting at the PC; online there is no such person, so the website works differently:
 
 - Every visitor gets a **private workspace**, tied to a secret cookie. Visitors never see each other's notes or plans.
 - Group invites are links (`/join?ws=…#code=…`). People who open one join that visitor's group as guests and get the same limited access as phones on Wi-Fi.
